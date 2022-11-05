@@ -1,0 +1,105 @@
+---
+- name: Setup rapid
+  hosts: rapid
+  tasks:
+  - name: Install dependencies
+    ansible.builtin.package:
+      state: present
+      name:
+      - nginx
+      - python3-cryptography
+  - name: Disable default site
+    ansible.builtin.file:
+      state: absent
+      path: /etc/nginx/sites-enabled/default
+    notify: Reload nginx
+  - name: Create letsencrypt config dir
+    ansible.builtin.file:
+      state: directory
+      path: /etc/letsencrypt
+      mode: u=rwx,g=,o=
+  - name: Generate a private key for {{ repos_server_name }}
+    community.crypto.openssl_privatekey:
+      path: '/etc/letsencrypt/{{ repos_server_name }}.key'
+  - name: Generate a certificate signing request
+    community.crypto.openssl_csr:
+      privatekey_path: '/etc/letsencrypt/{{ repos_server_name }}.key'
+      path: '/etc/letsencrypt/{{ repos_server_name }}.csr'
+      common_name: '{{ repos_server_name }}'
+  - name: Create a temporary self-signed certificate from CSR if not present
+    community.crypto.x509_certificate:
+      path: '/etc/letsencrypt/{{ repos_server_name }}.crt'
+      csr_path: '/etc/letsencrypt/{{ repos_server_name }}.csr'
+      privatekey_path: '/etc/letsencrypt/{{ repos_server_name }}.key'
+      selfsigned_not_after: +1d
+      provider: selfsigned
+  - name: Create the acme-challenge directory
+    ansible.builtin.file:
+      dest: /var/www/acme-challenge/.well-known/acme-challenge
+      state: directory
+  - name: Create repos site root directory
+    ansible.builtin.file:
+      state: directory
+      path: /var/www/repos
+  - name: Set up nginx website config
+    ansible.builtin.template:
+      src: templates/repos-site.conf.j2
+      dest: /etc/nginx/sites-available/repos-site.conf
+    notify: Reload nginx
+  - name: Enable nginx website
+    ansible.builtin.file:
+      state: link
+      src: /etc/nginx/sites-available/repos-site.conf
+      path: /etc/nginx/sites-enabled/repos-site.conf
+    notify: Reload nginx
+  - name: Nginx started
+    ansible.builtin.systemd:
+      name: nginx.service
+      state: started
+  - name: Flush handlers
+    meta: flush_handlers
+  - name: Generate letsencrypt account key
+    community.crypto.openssl_privatekey:
+      path: /etc/letsencrypt/account.key
+  - name: Get letsencrypt challenge
+    community.crypto.acme_certificate:
+      account_email: '{{ letsencrypt_email }}'
+      account_key_src: /etc/letsencrypt/account.key
+      acme_directory: https://acme-v02.api.letsencrypt.org/directory
+      acme_version: 2
+      challenge: http-01
+      csr: '/etc/letsencrypt/{{ repos_server_name }}.csr'
+      fullchain_dest: '/etc/letsencrypt/{{ repos_server_name }}.crt'
+      terms_agreed: yes
+    register: acme_challenge
+  - name: Needs to regenerate certificate
+    block:
+    - name: Setup letsencrypt challenge
+      ansible.builtin.copy:
+        dest: /var/www/acme-challenge/{{ acme_challenge['challenge_data'][repos_server_name]['http-01']['resource'] }}
+        content: "{{ acme_challenge['challenge_data'][repos_server_name]['http-01']['resource_value'] }}"
+    - name: Get letsencrypt certificate
+      community.crypto.acme_certificate:
+        account_email: '{{ letsencrypt_email }}'
+        account_key_src: /etc/letsencrypt/account.key
+        acme_directory: https://acme-v02.api.letsencrypt.org/directory
+        acme_version: 2
+        challenge: http-01
+        csr: '/etc/letsencrypt/{{ repos_server_name }}.csr'
+        fullchain_dest: '/etc/letsencrypt/{{ repos_server_name }}.crt'
+        data: "{{ acme_challenge }}"
+    - name: Cleanu up challenge directory
+      ansible.builtin.file:
+        dest: /var/www/acme-challenge/.well-known/acme-challenge
+        state: absent
+    when: acme_challenge is changed and repos_server_name in acme_challenge.challenge_data
+    notify: Reload nginx
+  - name: Create index file
+    ansible.builtin.copy:
+      dest: /var/www/repos/index.html
+      content: '{{ repos_server_name }}'
+  handlers:
+  - name: Reload nginx
+    ansible.builtin.systemd:
+      name: nginx.service
+      state: reloaded
