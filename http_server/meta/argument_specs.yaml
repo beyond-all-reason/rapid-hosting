@@ -1,0 +1,23 @@
+---
+argument_specs:
+  main:
+    options:
+      site_name:
+        required: true
+        type: 'str'
+        description: 'Short name of the website e.g. repos'
+      domain_name:
+        required: true
+        type: 'str'
+        description: 'Full qialified domain name to configure'
+      serving_root:
+        required: true
+        type: 'str'
+        description: 'Path to the root of http server'
+      config_fragment:
+        type: 'str'
+        description: 'Extension to the nginx website config'
+      letsencrypt_email:
+        type: 'str'
+        required: true
+        description: 'Email address for the letsencrypt account'
