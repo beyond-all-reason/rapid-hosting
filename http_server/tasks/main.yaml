@@ -23,13 +23,15 @@
     privatekey_path: '/etc/letsencrypt/{{ domain_name }}.key'
     path: '/etc/letsencrypt/{{ domain_name }}.csr'
     common_name: '{{ domain_name }}'
-- name: Create a temporary self-signed certificate from CSR if not present
+  register: signing_request
+- name: Create a temporary self-signed certificate from CSR if changed
   community.crypto.x509_certificate:
     path: '/etc/letsencrypt/{{ domain_name }}.crt'
     csr_path: '/etc/letsencrypt/{{ domain_name }}.csr'
     privatekey_path: '/etc/letsencrypt/{{ domain_name }}.key'
     selfsigned_not_after: +1d
     provider: selfsigned
+  when: signing_request is changed
 - name: Create the acme-challenge directory
   ansible.builtin.file:
     dest: /var/www/acme-challenge/.well-known/acme-challenge
@@ -75,6 +77,7 @@
     ansible.builtin.copy:
       dest: /var/www/acme-challenge/{{ acme_challenge['challenge_data'][domain_name]['http-01']['resource'] }}
       content: "{{ acme_challenge['challenge_data'][domain_name]['http-01']['resource_value'] }}"
+    when: domain_name in acme_challenge.challenge_data
   - name: Get letsencrypt certificate
     community.crypto.acme_certificate:
       account_email: '{{ letsencrypt_email }}'
@@ -85,9 +88,13 @@
       csr: '/etc/letsencrypt/{{ domain_name }}.csr'
       fullchain_dest: '/etc/letsencrypt/{{ domain_name }}.crt'
       data: "{{ acme_challenge }}"
+    notify: Reload nginx
   - name: Cleanu up challenge directory
     ansible.builtin.file:
       dest: /var/www/acme-challenge/.well-known/acme-challenge
       state: absent
-  when: acme_challenge is changed and domain_name in acme_challenge.challenge_data
-  notify: Reload nginx
+  - name: Create the acme-challenge directory
+    ansible.builtin.file:
+      dest: /var/www/acme-challenge/.well-known/acme-challenge
+      state: directory
+  when: acme_challenge is changed
