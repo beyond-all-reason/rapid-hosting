@@ -2,7 +2,7 @@
 - name: Setup rapid
   hosts: rapid
   vars:
-    repos_root: /var/www/repos
+    repos_www_root: /var/www/repos
   tasks:
   - name: Set up HTTP server for repos
     include_role:
@@ -10,8 +10,14 @@
     vars:
       site_name: repos
       domain_name: '{{ repos_domain_name }}'
-      serving_root: '{{ repos_root }}'
+      serving_root: '{{ repos_www_root }}'
   - name: Create index file
     ansible.builtin.copy:
-      dest: '{{ repos_root }}/index.html'
+      dest: '{{ repos_www_root }}/index.html'
       content: '{{ repos_domain_name }}'
+  - name: Set up rapid repos syncer
+    include_role:
+      name: rapid_repos
+    vars:
+      domain_name: '{{ repos_domain_name }}'
+      www_root: '{{ repos_www_root }}'

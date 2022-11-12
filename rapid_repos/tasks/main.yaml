@@ -1,0 +1,62 @@
+---
+- name: Fetch GitHub RapidTools releases
+  ansible.builtin.uri:
+    url: 'https://api.github.com/repos/{{ rapidtools_github }}/releases'
+  register: rt_releases
+- name: Install rapid rapidtools
+  ansible.builtin.apt:
+    deb: '{{ rt_releases.json | community.general.json_query(deb_query) }}'
+  vars:
+    deb_query: |
+      [?starts_with(tag_name, `rapidtools`) && !prerelease].assets[]
+      | [?ends_with(name, `.deb`) &&
+         !contains(name, `dbgsym`) &&
+         contains(name, `{{ ansible_facts.distribution_release }}` )]
+      | [0].browser_download_url
+- name: Install dependencies
+  ansible.builtin.package:
+    state: present
+    name:
+    - jq
+    - git
+- name: "Git config: Don't print detached head message"
+  community.general.git_config:
+    name: advice.detachedHead
+    value: 'false'
+- name: Install update-rapid-repo
+  ansible.builtin.template:
+    src: templates/update-rapid-repo.sh.j2
+    dest: '{{ bin_root }}/update-rapid-repo'
+    mode: 'u=rwx,g=rx,o=rx'
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    path: '{{ item }}'
+  loop:
+  - '{{ config_root }}'
+  - '{{ git_root }}'
+- name: Copy systemd units files
+  ansible.builtin.copy:
+    src: 'files/{{ item }}'
+    dest: '/etc/systemd/system/{{ item }}'
+  loop:
+  - update-rapid-repo@.service
+  - update-rapid-repo@.timer
+  register: systemd_units
+- name: Reload systemd daemon if needed
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: systemd_units is changed
+- name: Set up repos
+  include_tasks: repo.yaml
+  loop: '{{ repos }}'
+  loop_control:
+    loop_var: repo
+- name: Create repos.txt
+  ansible.builtin.template:
+    src: templates/repos.txt.j2
+    dest: '{{ www_root }}/repos.txt'
+- name: Create repos.gz
+  community.general.archive:
+    path: '{{ www_root }}/repos.txt'
+    dest: '{{ www_root }}/repos.gz'

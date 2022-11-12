@@ -1,0 +1,14 @@
+[Unit]
+Description=Update rapid repo
+
+[Service]
+Type=simple
+TimeoutSec=10m
+ExecStart=update-rapid-repo %I
+CPUSchedulingPolicy = batch
+Nice = 8
+IOSchedulingClass = best-effort
+IOSchedulingPriority = 5
+
+[Install]
+Also=update-rapid-repo@.timer

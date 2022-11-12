@@ -1,0 +1,12 @@
+[Unit]
+Description=Update rapid repo periodically
+After=network-online.target
+
+[Timer]
+OnActiveSec=1m
+OnUnitActiveSec=4m
+AccuracySec=1m
+RandomizedDelaySec=2m
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,22 @@
+---
+- name: Check repo name is only alphanum and dashes
+  assert:
+    that: repo.name is match('^[a-z0-9-]+$')
+    quiet: true
+- name: Set repo {{ repo.name }} config
+  ansible.builtin.copy:
+    dest: '{{ config_root }}/repo-{{ repo.name }}.json'
+    content: '{{ repo | to_json(indent=4, sort_keys=True) }}'
+- name: Fetch {{ repo.name }} git repository
+  ansible.builtin.git:
+    dest: '{{ git_root }}/{{ repo.name }}'
+    repo: '{{ repo.origin }}'
+    single_branch: true
+    update: no
+    version: "{{ repo.branch }}"
+- name: Enable systemd timer for updating {{ repo.name }}
+  ansible.builtin.systemd:
+    # replace simulated systemd-escape for the single allowed character needing it
+    name: "update-rapid-repo@{{ repo.name | replace('-', '\\x2d') }}.timer"
+    state: started
+    enabled: yes

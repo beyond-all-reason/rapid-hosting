@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -euo pipefail
+
+REPO="$1"
+
+cd "{{ git_root }}/$REPO"
+
+git fetch origin "$(jq -r .branch "{{ config_root }}/repo-$REPO.json")"
+git checkout FETCH_HEAD
+
+git submodule sync --recursive
+git submodule update --recursive --remote --init
+git clean -xfdf
+git submodule foreach --recursive git clean -xfdf
+
+rapidtools-buildgit "$PWD" / modinfo.lua \
+  "{{ www_root }}/$REPO" $(git rev-parse HEAD) $REPO

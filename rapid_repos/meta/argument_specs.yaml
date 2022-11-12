@@ -1,0 +1,30 @@
+---
+argument_specs:
+  main:
+    options:
+      domain_name:
+        required: true
+        type: 'str'
+        description: 'Full qialified domain name for repos'
+      www_root:
+        required: true
+        type: 'str'
+        description: 'HTTP root for repos'
+      repos:
+        required: true
+        type: 'list'
+        description: 'List of repos to set up'
+        elements: 'dict'
+        options:
+          name:
+            required: true
+            type: 'str'
+            description: 'Name of package'
+          origin:
+            required: true
+            type: 'str'
+            description: 'Git repo url'
+          branch:
+            required: true
+            type: 'str'
+            description: 'Branch name to clone'
