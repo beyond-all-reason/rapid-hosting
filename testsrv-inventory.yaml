@@ -1,0 +1,11 @@
+rapid:
+  hosts:
+    localhost:
+      ansible_host: localhost
+      ansible_user: root
+      repos_domain_name: localhost
+      letsencrypt_email: root@localhost
+      repos:
+      - name: chobby
+        origin: https://github.com/Spring-Chobby/Chobby.git
+        branch: master

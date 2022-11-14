@@ -60,6 +60,7 @@
 - name: Generate letsencrypt account key
   community.crypto.openssl_privatekey:
     path: /etc/letsencrypt/account.key
+  tags: letsencrypt
 - name: Get letsencrypt challenge
   community.crypto.acme_certificate:
     account_email: '{{ letsencrypt_email }}'
@@ -71,6 +72,7 @@
     fullchain_dest: '/etc/letsencrypt/{{ domain_name }}.crt'
     terms_agreed: yes
   register: acme_challenge
+  tags: letsencrypt
 - name: Needs to regenerate certificate
   block:
   - name: Setup letsencrypt challenge
@@ -98,3 +100,4 @@
       dest: /var/www/acme-challenge/.well-known/acme-challenge
       state: directory
   when: acme_challenge is changed
+  tags: letsencrypt
