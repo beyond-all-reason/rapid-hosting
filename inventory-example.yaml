@@ -1,7 +1,0 @@
-rapid:
-  hosts:
-    test:
-      ansible_host: repos.test-domain.dev
-      ansible_become: yes
-      repos_domain_name: repos.test-domain.dev
-      letsencrypt_email: owner@test-domain.dev

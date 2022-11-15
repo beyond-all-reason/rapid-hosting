@@ -1,0 +1,27 @@
+rapid:
+  hosts:
+    repos-main:
+      ansible_host: repos.beyondallreason.dev
+      ansible_user: debian
+      ansible_become: yes
+      repos_domain_name: repos.beyondallreason.dev
+      letsencrypt_email: marek+bar@p2004a.com
+      repos:
+      - name: chobby
+        origin: https://github.com/Spring-Chobby/Chobby.git
+        branch: master
+      - name: byar-chobby
+        origin: https://github.com/beyond-all-reason/BYAR-Chobby.git
+        branch: master
+      - name: byar
+        origin: https://github.com/beyond-all-reason/Beyond-All-Reason.git
+        branch: master
+    testsrv:
+      ansible_host: localhost
+      ansible_user: root
+      repos_domain_name: localhost
+      letsencrypt_email: root@localhost
+      repos:
+      - name: chobby
+        origin: https://github.com/Spring-Chobby/Chobby.git
+        branch: master

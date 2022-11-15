@@ -11,7 +11,8 @@
   ansible.builtin.git:
     dest: '{{ git_root }}/{{ repo.name }}'
     repo: '{{ repo.origin }}'
-    single_branch: true
+    # only in ansible 2.11
+    # single_branch: true
     update: no
     version: "{{ repo.branch }}"
 - name: Enable systemd timer for updating {{ repo.name }}
