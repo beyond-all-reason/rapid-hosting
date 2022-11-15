@@ -12,7 +12,7 @@ Without acquiring of the certificate from Let's Encrypt, it's possible to test t
 podman build --build-arg=SSH_PUB_KEY="$(cat ~/.ssh/id_ed25519.pub)" \
   -f testsrv.Dockerfile -t rapid-hosting-testsrv
 podman run --publish-all --detach --name testsrv rapid-hosting-testsrv
-ansible-playbook -i inventory.yaml --skip-tags letsencrypt \
+ansible-playbook -i inventory.yaml --skip-tags letsencrypt,ansible_pull \
   -e ansible_ssh_port=$(podman port testsrv 22 | cut -d: -f2) \
   -e repos_address_override=localhost:$(podman port testsrv 443 | cut -d: -f2) \
   -l testsrv play.yaml

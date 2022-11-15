@@ -3,6 +3,7 @@
   hosts: rapid
   vars:
     repos_www_root: /var/www/repos
+    playbook_repo_url: https://github.com/p2004a/rapid-hosting.git
   tasks:
   - name: Set up HTTP server for repos
     include_role:
@@ -21,3 +22,7 @@
     vars:
       domain_name: '{{ repos_domain_name }}'
       www_root: '{{ repos_www_root }}'
+  - name: Set up ansible-pull
+    include_role:
+      name: ansible_pull
+    tags: ansible_pull

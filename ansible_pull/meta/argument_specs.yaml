@@ -1,0 +1,8 @@
+---
+argument_specs:
+  main:
+    options:
+      playbook_repo_url:
+        required: true
+        type: 'str'
+        description: 'URL to for ansible-pull to execute'
