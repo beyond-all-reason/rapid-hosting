@@ -15,6 +15,15 @@
     # single_branch: true
     update: no
     version: "{{ repo.branch }}"
+- name: Create www repo directory
+  ansible.builtin.file:
+    state: directory
+    path: '{{ www_root }}/{{ repo.name }}'
+- name: Symlink streamer.cgi
+  ansible.builtin.file:
+    state: link
+    src: /usr/bin/rapidtools-streamer
+    path: '{{ www_root }}/{{ repo.name }}/streamer.cgi'
 - name: Enable systemd timer for updating {{ repo.name }}
   ansible.builtin.systemd:
     # replace simulated systemd-escape for the single allowed character needing it

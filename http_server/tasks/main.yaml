@@ -3,6 +3,7 @@
   ansible.builtin.package:
     state: present
     name:
+    - fcgiwrap
     - nginx
     - python3-cryptography
 - name: Disable default site
@@ -51,6 +52,10 @@
     src: '/etc/nginx/sites-available/{{ site_name }}.conf'
     path: '/etc/nginx/sites-enabled/{{ site_name }}.conf'
   notify: Reload nginx
+- name: Enable fcgiwrap socket
+  ansible.builtin.systemd:
+    name: fcgiwrap.socket
+    state: started
 - name: Nginx started
   ansible.builtin.systemd:
     name: nginx.service

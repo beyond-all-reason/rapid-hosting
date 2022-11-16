@@ -14,9 +14,6 @@ argument_specs:
         required: true
         type: 'str'
         description: 'Path to the root of http server'
-      config_fragment:
-        type: 'str'
-        description: 'Extension to the nginx website config'
       letsencrypt_email:
         type: 'str'
         required: true

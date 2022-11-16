@@ -17,7 +17,7 @@ ansible-playbook -i inventory.yaml --skip-tags letsencrypt,ansible_pull \
   -e repos_address_override=localhost:$(podman port testsrv 443 | cut -d: -f2) \
   -l testsrv play.yaml
 podman exec testsrv systemctl start --wait update-rapid-repo@chobby.service
-PRD_DISABLE_CERT_CHECK=true PRD_RAPID_USE_STREAMER=false \
-  PRD_RAPID_REPO_MASTER=https://localhost:$(podman port testsrv 443 | cut -d: -f2)/repos.gz \
+PRD_RAPID_REPO_MASTER=https://localhost:$(podman port testsrv 443 | cut -d: -f2)/repos.gz \
+  PRD_DISABLE_CERT_CHECK=true \
   pr-downloader --filesystem-writepath /tmp/prd --download-game chobby:test
 ```

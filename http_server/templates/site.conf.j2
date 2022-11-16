@@ -19,5 +19,8 @@ server {
 		root /var/www/acme-challenge;
 	}
 
-{{ config_fragment | default ('') }}
+	location ~ \.cgi$ {
+		include /etc/nginx/fastcgi_params;
+		fastcgi_pass unix:/var/run/fcgiwrap.socket;
+	}
 }
