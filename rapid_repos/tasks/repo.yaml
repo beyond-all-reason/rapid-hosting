@@ -22,7 +22,7 @@
 - name: Symlink streamer.cgi
   ansible.builtin.file:
     state: link
-    src: /usr/bin/rapidtools-streamer
+    src: /usr/bin/rapid-streamer
     path: '{{ www_root }}/{{ repo.name }}/streamer.cgi'
 - name: Enable systemd timer for updating {{ repo.name }}
   ansible.builtin.systemd:

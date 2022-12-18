@@ -14,5 +14,5 @@ git submodule update --recursive --remote --init
 git clean -xfdf
 git submodule foreach --recursive git clean -xfdf
 
-rapidtools-buildgit "$PWD" / modinfo.lua \
+rapid-buildgit "$PWD" / modinfo.lua \
   "{{ www_root }}/$REPO" $(git rev-parse HEAD) $REPO

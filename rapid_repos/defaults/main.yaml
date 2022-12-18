@@ -2,4 +2,4 @@
 git_root: /var/local/rapid-repos
 config_root: /usr/local/etc/rapid-repos
 bin_root: /usr/local/bin
-rapidtools_github: beyond-all-reason/pr-downloader
+rapidtools_github: beyond-all-reason/RapidTools

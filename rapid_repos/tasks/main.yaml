@@ -3,15 +3,14 @@
   ansible.builtin.uri:
     url: 'https://api.github.com/repos/{{ rapidtools_github }}/releases'
   register: rt_releases
-- name: Install rapid rapidtools
+- name: Install rapidtools
   ansible.builtin.apt:
     deb: '{{ rt_releases.json | community.general.json_query(deb_query) }}'
   vars:
     deb_query: |
-      [?starts_with(tag_name, `rapidtools`) && !prerelease].assets[]
+      [?!prerelease].assets[]
       | [?ends_with(name, `.deb`) &&
-         !contains(name, `dbgsym`) &&
-         contains(name, `{{ ansible_facts.distribution_release }}` )]
+         !contains(name, `dbgsym`)]
       | [0].browser_download_url
 - name: Install dependencies
   ansible.builtin.package:
