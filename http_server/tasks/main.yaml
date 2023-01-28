@@ -76,6 +76,8 @@
     csr: '/etc/letsencrypt/{{ domain_name }}.csr'
     fullchain_dest: '/etc/letsencrypt/{{ domain_name }}.crt'
     terms_agreed: yes
+    # Let's Encrypt sens automatic email 19 days before expiration
+    remaining_days: 30
   register: acme_challenge
   tags: letsencrypt
 - name: Needs to regenerate certificate
@@ -95,6 +97,7 @@
       csr: '/etc/letsencrypt/{{ domain_name }}.csr'
       fullchain_dest: '/etc/letsencrypt/{{ domain_name }}.crt'
       data: "{{ acme_challenge }}"
+      remaining_days: 30
     notify: Reload nginx
   - name: Cleanu up challenge directory
     ansible.builtin.file:
