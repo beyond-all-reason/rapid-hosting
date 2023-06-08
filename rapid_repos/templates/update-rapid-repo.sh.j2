@@ -7,7 +7,7 @@ REPO="$1"
 cd "{{ git_root }}/$REPO"
 
 git fetch origin "$(jq -r .branch "{{ config_root }}/repo-$REPO.json")"
-git checkout FETCH_HEAD
+git checkout FETCH_HEAD --force
 
 git submodule sync --recursive
 git submodule update --recursive --remote --init
