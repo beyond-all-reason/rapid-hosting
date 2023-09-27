@@ -1,7 +1,7 @@
 rapid:
   hosts:
-    repos-main:
-      ansible_host: repos.beyondallreason.dev
+    spads-eu3:
+      ansible_host: 135.125.232.13
       ansible_user: debian
       ansible_become: yes
       repos_domain_name: repos.beyondallreason.dev
