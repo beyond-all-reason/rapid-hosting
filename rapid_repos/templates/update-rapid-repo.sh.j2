@@ -9,9 +9,23 @@ if [[ ! "$REPO" =~ ^[a-z0-9-]{2,20}$ ]]; then
     exit 1
 fi
 
+REPO_CONFIG="{{ config_root }}/repo-$REPO.json"
+
+if [[ ! -f "$REPO_CONFIG" ]]; then
+    echo "Repo not found"
+    exit 1
+fi
+
+(
+# Lock the repo config file to prevent concurrent updates
+if ! flock -w 10 200; then
+    echo "Another process is already updating this repo, timed out waiting for it to finish"
+    exit 1
+fi
+
 cd "{{ git_root }}/$REPO"
 
-git fetch origin "$(jq -r .branch "{{ config_root }}/repo-$REPO.json")"
+git fetch origin "$(jq -r .branch "$REPO_CONFIG")"
 git checkout FETCH_HEAD --force
 
 git submodule sync --recursive
@@ -21,3 +35,5 @@ git submodule foreach --recursive git clean -xfdf
 
 rapid-buildgit "$PWD" / modinfo.lua \
   "{{ www_root }}/$REPO" $(git rev-parse HEAD) $REPO
+
+) 200>>"$REPO_CONFIG"
