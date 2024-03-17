@@ -4,6 +4,11 @@ set -euo pipefail
 
 REPO="$1"
 
+if [[ ! "$REPO" =~ ^[a-z0-9-]{2,20}$ ]]; then
+    echo "Illegal repo name"
+    exit 1
+fi
+
 cd "{{ git_root }}/$REPO"
 
 git fetch origin "$(jq -r .branch "{{ config_root }}/repo-$REPO.json")"
