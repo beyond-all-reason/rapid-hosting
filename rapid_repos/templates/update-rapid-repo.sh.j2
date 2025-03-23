@@ -28,8 +28,7 @@ cd "{{ git_root }}/$REPO"
 git fetch origin "$(jq -r .branch "$REPO_CONFIG")"
 git checkout FETCH_HEAD --force
 
-git submodule sync --recursive
-git submodule update --recursive --remote --init
+git submodule update --recursive --init
 git clean -xfdf
 git submodule foreach --recursive git clean -xfdf
 
