@@ -15,7 +15,7 @@ rapid:
         branch: master
       - name: byar
         origin: https://github.com/beyond-all-reason/Beyond-All-Reason.git
-        branch: master
+        branch: stable
     testsrv:
       ansible_host: localhost
       ansible_user: root
