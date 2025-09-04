@@ -1,4 +1,4 @@
-FROM docker.io/library/debian:bullseye
+FROM docker.io/library/debian:trixie
 ARG SSH_PUB_KEY
 
 RUN apt-get update \

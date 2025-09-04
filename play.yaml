@@ -9,7 +9,6 @@
     include_role:
       name: http_server
     vars:
-      site_name: repos
       domain_name: '{{ repos_domain_name }}'
       serving_root: '{{ repos_www_root }}'
   - name: Create index file
@@ -22,7 +21,3 @@
     vars:
       domain_name: '{{ repos_domain_name }}'
       www_root: '{{ repos_www_root }}'
-  - name: Set up ansible-pull
-    include_role:
-      name: ansible_pull
-    tags: ansible_pull

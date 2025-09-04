@@ -1,9 +1,0 @@
-[Unit]
-Description=Run ansible pull for server periodically
-
-[Timer]
-OnCalendar=0/8:00:00 UTC
-RandomizedDelaySec=15m
-
-[Install]
-WantedBy=timers.target

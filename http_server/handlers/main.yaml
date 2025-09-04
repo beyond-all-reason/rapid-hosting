@@ -1,5 +1,5 @@
 ---
-- name: Reload nginx
+- name: Reload caddy
   ansible.builtin.systemd:
-    name: nginx.service
+    name: caddy.service
     state: reloaded

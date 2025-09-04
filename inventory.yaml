@@ -5,7 +5,6 @@ rapid:
       ansible_user: debian
       ansible_become: yes
       repos_domain_name: repos.beyondallreason.dev
-      letsencrypt_email: marek+bar@p2004a.com
       repos:
       - name: chobby
         origin: https://github.com/Spring-Chobby/Chobby.git
@@ -20,7 +19,6 @@ rapid:
       ansible_host: localhost
       ansible_user: root
       repos_domain_name: localhost
-      letsencrypt_email: root@localhost
       repos:
       - name: chobby
         origin: https://github.com/Spring-Chobby/Chobby.git

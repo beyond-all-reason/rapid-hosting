@@ -2,110 +2,13 @@
 - name: Install dependencies
   ansible.builtin.package:
     state: present
-    name:
-    - fcgiwrap
-    - nginx
-    - python3-cryptography
-- name: Disable default site
-  ansible.builtin.file:
-    state: absent
-    path: /etc/nginx/sites-enabled/default
-  notify: Reload nginx
-- name: Create letsencrypt config dir
-  ansible.builtin.file:
-    state: directory
-    path: /etc/letsencrypt
-    mode: u=rwx,g=,o=
-- name: Generate a private key for {{ domain_name }}
-  community.crypto.openssl_privatekey:
-    path: '/etc/letsencrypt/{{ domain_name }}.key'
-- name: Generate a certificate signing request
-  community.crypto.openssl_csr:
-    privatekey_path: '/etc/letsencrypt/{{ domain_name }}.key'
-    path: '/etc/letsencrypt/{{ domain_name }}.csr'
-    common_name: '{{ domain_name }}'
-  register: signing_request
-- name: Create a temporary self-signed certificate from CSR if changed
-  community.crypto.x509_certificate:
-    path: '/etc/letsencrypt/{{ domain_name }}.crt'
-    csr_path: '/etc/letsencrypt/{{ domain_name }}.csr'
-    privatekey_path: '/etc/letsencrypt/{{ domain_name }}.key'
-    selfsigned_not_after: +1d
-    provider: selfsigned
-  when: signing_request is changed
-- name: Create the acme-challenge directory
-  ansible.builtin.file:
-    dest: /var/www/acme-challenge/.well-known/acme-challenge
-    state: directory
+    name: caddy
 - name: Create site root directory
   ansible.builtin.file:
     state: directory
     path: '{{ serving_root }}'
-- name: Set up nginx {{ site_name }} website config
+- name: Set up caddy config
   ansible.builtin.template:
-    src: templates/site.conf.j2
-    dest: '/etc/nginx/sites-available/{{ site_name }}.conf'
-  notify: Reload nginx
-- name: Enable nginx {{ site_name }} website
-  ansible.builtin.file:
-    state: link
-    src: '/etc/nginx/sites-available/{{ site_name }}.conf'
-    path: '/etc/nginx/sites-enabled/{{ site_name }}.conf'
-  notify: Reload nginx
-- name: Enable fcgiwrap socket
-  ansible.builtin.systemd:
-    name: fcgiwrap.socket
-    state: started
-- name: Nginx started
-  ansible.builtin.systemd:
-    name: nginx.service
-    state: started
-- name: Flush handlers
-  meta: flush_handlers
-- name: Generate letsencrypt account key
-  community.crypto.openssl_privatekey:
-    path: /etc/letsencrypt/account.key
-  tags: letsencrypt
-- name: Get letsencrypt challenge
-  community.crypto.acme_certificate:
-    account_email: '{{ letsencrypt_email }}'
-    account_key_src: /etc/letsencrypt/account.key
-    acme_directory: '{{ acme_directory }}'
-    acme_version: 2
-    challenge: http-01
-    csr: '/etc/letsencrypt/{{ domain_name }}.csr'
-    fullchain_dest: '/etc/letsencrypt/{{ domain_name }}.crt'
-    terms_agreed: yes
-    # Let's Encrypt sens automatic email 19 days before expiration
-    remaining_days: 30
-  register: acme_challenge
-  tags: letsencrypt
-- name: Needs to regenerate certificate
-  block:
-  - name: Setup letsencrypt challenge
-    ansible.builtin.copy:
-      dest: /var/www/acme-challenge/{{ acme_challenge['challenge_data'][domain_name]['http-01']['resource'] }}
-      content: "{{ acme_challenge['challenge_data'][domain_name]['http-01']['resource_value'] }}"
-    when: domain_name in acme_challenge.challenge_data
-  - name: Get letsencrypt certificate
-    community.crypto.acme_certificate:
-      account_email: '{{ letsencrypt_email }}'
-      account_key_src: /etc/letsencrypt/account.key
-      acme_directory: '{{ acme_directory }}'
-      acme_version: 2
-      challenge: http-01
-      csr: '/etc/letsencrypt/{{ domain_name }}.csr'
-      fullchain_dest: '/etc/letsencrypt/{{ domain_name }}.crt'
-      data: "{{ acme_challenge }}"
-      remaining_days: 30
-    notify: Reload nginx
-  - name: Cleanu up challenge directory
-    ansible.builtin.file:
-      dest: /var/www/acme-challenge/.well-known/acme-challenge
-      state: absent
-  - name: Create the acme-challenge directory
-    ansible.builtin.file:
-      dest: /var/www/acme-challenge/.well-known/acme-challenge
-      state: directory
-  when: acme_challenge is changed
-  tags: letsencrypt
+    src: templates/Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+  notify: Reload caddy

@@ -11,19 +11,13 @@
   ansible.builtin.git:
     dest: '{{ git_root }}/{{ repo.name }}'
     repo: '{{ repo.origin }}'
-    # only in ansible 2.11
-    # single_branch: true
+    single_branch: true
     update: no
     version: "{{ repo.branch }}"
 - name: Create www repo directory
   ansible.builtin.file:
     state: directory
     path: '{{ www_root }}/{{ repo.name }}'
-- name: Symlink streamer.cgi
-  ansible.builtin.file:
-    state: link
-    src: /usr/bin/rapid-streamer
-    path: '{{ www_root }}/{{ repo.name }}/streamer.cgi'
 - name: Enable systemd timer for updating {{ repo.name }}
   ansible.builtin.systemd:
     # replace simulated systemd-escape for the single allowed character needing it
