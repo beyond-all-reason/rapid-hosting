@@ -3,6 +3,9 @@
 set -euo pipefail
 
 REPO="$1"
+BRANCH="${2:-}"      # Optional branch argument
+CUSTOM_RAPID_TAG="${3:-}" # Optional rapid tag argument
+CUSTOM_GAME_VERSION="${4:-}" # Optional game version argument
 
 if [[ ! "$REPO" =~ ^[a-z0-9-]{2,20}$ ]]; then
     echo "Illegal repo name"
@@ -25,14 +28,24 @@ fi
 
 cd "{{ git_root }}/$REPO"
 
-git fetch origin "$(jq -r .branch "$REPO_CONFIG")"
+# Determine branch to use
+if [[ -n "$BRANCH" ]]; then
+        BRANCH_TO_USE="$BRANCH"
+else
+        BRANCH_TO_USE="$(jq -r .branch "$REPO_CONFIG")"
+fi
+
+git fetch origin "$BRANCH_TO_USE"
 git checkout FETCH_HEAD --force
 
 git submodule update --recursive --init
 git clean -xfdf
 git submodule foreach --recursive git clean -xfdf
 
-rapid-buildgit "$PWD" / modinfo.lua \
-  "{{ www_root }}/$REPO" $(git rev-parse HEAD) $REPO
+# Determine rapid tag and game version
+TAG_TO_USE="$CUSTOM_RAPID_TAG"
+GAME_VERSION_TO_USE="$CUSTOM_GAME_VERSION"
+
+rapid-buildgit "$PWD" / modinfo.lua "{{ www_root }}/$REPO" $(git rev-parse HEAD) $REPO "$TAG_TO_USE" "$GAME_VERSION_TO_USE"
 
 ) 200>>"$REPO_CONFIG"
