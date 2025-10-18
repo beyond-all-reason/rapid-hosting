@@ -49,3 +49,11 @@
   community.general.archive:
     path: '{{ www_root }}/repos.txt'
     dest: '{{ www_root }}/repos.gz'
+- name: Add deploy key for GitHub Actions
+  authorized_key:
+    user: deploy
+    key: "{{ lookup('file', 'files/github-actions.pub') }}"
+    key_options: 'command="sudo update-rapid-repo \"$SSH_ORIGINAL_COMMAND\""'
+    state: present
+    manage_dir: yes
+    exclusive: no
