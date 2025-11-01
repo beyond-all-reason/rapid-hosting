@@ -27,4 +27,9 @@ argument_specs:
           branch:
             required: true
             type: 'str'
-            description: 'Branch name to clone'
+            description: 'Primary branch to clone and build periodically'
+          branches:
+            required: false
+            type: 'list'
+            elements: 'str'
+            description: 'Branches that are allowed to be built for this repo (defaults to the primary branch)'

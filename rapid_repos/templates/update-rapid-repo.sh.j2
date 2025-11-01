@@ -29,10 +29,31 @@ fi
 cd "{{ git_root }}/$REPO"
 
 # Determine branch to use
+DEFAULT_BRANCH="$(jq -r '.branch // empty' "$REPO_CONFIG")"
 if [[ -n "$BRANCH" ]]; then
-        BRANCH_TO_USE="$BRANCH"
+    BRANCH_TO_USE="$BRANCH"
 else
-        BRANCH_TO_USE="$(jq -r .branch "$REPO_CONFIG")"
+    BRANCH_TO_USE="$DEFAULT_BRANCH"
+fi
+
+if [[ -z "$BRANCH_TO_USE" ]]; then
+    echo "No branch specified and no default branch configured"
+    exit 1
+fi
+
+# Validate branch is allowed for this repo
+if ! jq -e --arg branch "$BRANCH_TO_USE" '
+    ((.branches // []) + [(.branch // empty)])
+    | map(select(. != ""))
+    | index($branch) != null
+' "$REPO_CONFIG" >/dev/null; then
+    echo "Branch $BRANCH_TO_USE is not configured for repo $REPO"
+    exit 1
+fi
+
+if ! git check-ref-format --branch "$BRANCH_TO_USE" >/dev/null 2>&1; then
+    echo "Branch name $BRANCH_TO_USE is not a valid ref"
+    exit 1
 fi
 
 git fetch origin "$BRANCH_TO_USE"
