@@ -45,3 +45,14 @@ ssh deploy@host update-rapid-repo <repo> <branch> <rapid_tag> <game_version>
 ```
 
 All arguments are optional except `<repo>`.
+
+Configuring Branch Builds
+-------------------------
+
+Every repo definition in your inventory retains a primary `branch`, which the periodic timer builds. To allow ad hoc builds for additional branches, add a `branches` list to the repo entry. The primary `branch` must also appear in that list. If the list is omitted, the role automatically limits builds to the primary branch. When triggering a build manually (for example from CI) pass the desired branch as the second argument to `update-rapid-repo`:
+
+```
+ssh deploy@host update-rapid-repo <repo> <branch>
+```
+
+Only the branches listed in the repo configuration are accepted.
