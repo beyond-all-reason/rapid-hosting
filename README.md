@@ -18,6 +18,7 @@ ansible-playbook -i inventory.yaml \
   -l testsrv play.yaml
 podman exec testsrv systemctl start --wait update-rapid-repo@chobby.service
 PRD_RAPID_REPO_MASTER=https://localhost:$(podman port testsrv 443 | cut -d: -f2)/repos.gz \
+  PRD_RAPID_USE_STREAMER=false \
   PRD_DISABLE_CERT_CHECK=true \
   pr-downloader --filesystem-writepath /tmp/prd --download-game chobby:test
 podman stop testsrv
