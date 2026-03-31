@@ -3,15 +3,21 @@
   assert:
     that: repo.name is match('^[a-z0-9-]+$')
     quiet: true
+- name: Ensure default branch configured for {{ repo.name }} is allowed
+  ansible.builtin.assert:
+    that:
+    - repo.branch in (repo.branches | default([repo.branch]))
+    fail_msg: 'Default branch {{ repo.branch }} must be included in the branches list for {{ repo.name }}'
 - name: Set repo {{ repo.name }} config
   ansible.builtin.copy:
     dest: '{{ config_root }}/repo-{{ repo.name }}.json'
-    content: '{{ repo | to_json(indent=4, sort_keys=True) }}'
+    content: '{{ repo_config | to_json(indent=4, sort_keys=True) }}'
+  vars:
+    repo_config: "{{ repo | combine({'branches': repo.branches | default([repo.branch])}) }}"
 - name: Fetch {{ repo.name }} git repository
   ansible.builtin.git:
     dest: '{{ git_root }}/{{ repo.name }}'
     repo: '{{ repo.origin }}'
-    single_branch: true
     update: no
     version: "{{ repo.branch }}"
 - name: Create www repo directory
