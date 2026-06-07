@@ -53,7 +53,7 @@
   authorized_key:
     user: deploy
     key: "{{ lookup('file', 'files/github-actions.pub') }}"
-    key_options: 'command="sudo update-rapid-repo \"$SSH_ORIGINAL_COMMAND\""'
+    key_options: 'command="sudo update-rapid-repo $SSH_ORIGINAL_COMMAND"'
     state: present
     manage_dir: yes
     exclusive: no
