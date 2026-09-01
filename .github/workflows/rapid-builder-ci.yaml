@@ -1,0 +1,69 @@
+name: Rapid Builder CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - rapid-builder/**
+      - .github/workflows/rapid-builder-ci.yaml
+  pull_request:
+    paths:
+      - rapid-builder/**
+      - .github/workflows/rapid-builder-ci.yaml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: rapid-builder
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: rapid-builder/.nvmrc
+          cache: npm
+          cache-dependency-path: rapid-builder/package-lock.json
+
+      - run: npm ci
+
+      - name: Lint and format check
+        run: npm run lint
+
+      # Runs even when the check above failed, so one run reports both.
+      - name: Typecheck
+        if: ${{ !cancelled() }}
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+  # The end-to-end test needs the real rapid-buildgit and the bunny-enabled
+  # rclone, which only the image has. Building rclone from source is the slow
+  # part and caches well.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: rapid-builder
+          target: e2e
+          load: true
+          tags: rapid-build-e2e
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - run: docker run --rm rapid-build-e2e

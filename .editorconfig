@@ -1,0 +1,17 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = tab
+insert_final_newline = true
+trim_trailing_whitespace = true
+# Keep in sync with formatter.lineWidth in rapid-builder/biome.json
+max_line_length = 100
+
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2

@@ -1,0 +1,12 @@
+{
+	"extends": "@tsconfig/node26/tsconfig.json",
+	"compilerOptions": {
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"allowImportingTsExtensions": true,
+		"erasableSyntaxOnly": true,
+		"verbatimModuleSyntax": true,
+		"noEmit": true
+	},
+	"include": ["src", "test", "dev"]
+}

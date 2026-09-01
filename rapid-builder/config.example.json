@@ -1,0 +1,15 @@
+{
+	"audience": "https://my-bar-rapid-build.com",
+	"bunny": {
+		"storageZone": "my-repos-zone-ssd",
+		"storageUrl": "https://storage.bunnycdn.com",
+		"pullZone": "my-repos-pull-zone",
+		"baseUrl": "https://repos.example.com"
+	},
+	"repos": {
+		"byar": {
+			"githubRepository": "my-fork/Beyond-All-Reason",
+			"policy": "claims.ref == 'refs/heads/master' && !has(request.version) && request.branch == 'test'"
+		}
+	}
+}

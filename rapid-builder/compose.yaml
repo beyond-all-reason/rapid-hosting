@@ -1,0 +1,58 @@
+# See docs/sandbox.md. Production does not use this file.
+services:
+  sandbox:
+    build:
+      context: .
+      target: dev
+    restart: unless-stopped
+    environment:
+      SANDBOX_PUBLIC_HOST: sandbox
+    ports:
+      # Bunny storage, the CDN and the management API, and the OIDC issuer.
+      - "127.0.0.1:8443:8443"
+      - "127.0.0.1:8081:8081"
+      - "127.0.0.1:8444:8444"
+    volumes:
+      # Read-write: this is the container that owns the sandbox directory.
+      - ./sandbox:/sandbox
+      # A /dev/null bind reads as empty, which is how BASE_CONFIG stays
+      # optional without this mount changing.
+      - ${BASE_CONFIG:-/dev/null}:/base-config.json:ro
+    healthcheck:
+      # What rapid-build waits for, and the one thing every mode writes.
+      test: ["CMD", "test", "-f", "/sandbox/config.json"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  rapid-build:
+    build: .
+    restart: unless-stopped
+    # On shutdown the service stops accepting requests but finishes builds
+    # that are already running so give it time to do so.
+    stop_grace_period: 5m
+    depends_on:
+      sandbox:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      # Prometheus metrics
+      - "127.0.0.1:9464:9464"
+    environment:
+      BUNNY_DRY_RUN: ${BUNNY_DRY_RUN:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      # What startSandbox in dev/sandbox.ts writes.
+      CONFIG_FILE: /sandbox/config.json
+      GIT_CONFIG_GLOBAL: /sandbox/gitconfig
+      GIT_CONFIG_SYSTEM: /dev/null
+      # The defaults suit the fake, which serves a self-signed certificate and
+      # accepts these two keys. See docs/sandbox.md for a real account.
+      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-0}
+      RCLONE_NO_CHECK_CERTIFICATE: ${RCLONE_NO_CHECK_CERTIFICATE:-true}
+      BUNNY_API_KEY: ${BUNNY_API_KEY:-api-key}
+      BUNNY_STORAGE_ACCESS_KEY: ${BUNNY_STORAGE_ACCESS_KEY:-storage-key}
+    volumes:
+      - ./data:/data
+      # Read-only: the sandbox owns these.
+      - ./sandbox:/sandbox:ro
+      - ${DEV_REPO:-./origin}:/origin:ro
