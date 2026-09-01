@@ -1,0 +1,5 @@
+# Production inventory for BAR rapid hosting
+spads-eu3 ansible_host=135.125.232.13 ansible_user=debian
+
+[prod]
+spads-eu3

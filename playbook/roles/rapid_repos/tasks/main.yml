@@ -37,7 +37,7 @@
     daemon_reload: yes
   when: systemd_units is changed
 - name: Set up repos
-  include_tasks: repo.yaml
+  include_tasks: repo.yml
   loop: '{{ repos }}'
   loop_control:
     loop_var: repo

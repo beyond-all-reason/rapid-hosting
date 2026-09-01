@@ -1,0 +1,77 @@
+---
+- name: Set timezone to UTC
+  community.general.timezone:
+    name: Etc/UTC
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: '{{ rapid_srv_hostname }}'
+  when: rapid_srv_hostname != ''
+- name: Install packages
+  ansible.builtin.package:
+    name:
+      - acl  # for ansible become
+      - bind9-dnsutils
+      - curl
+      - htop
+      - less
+      - man
+      - nano
+      - podman
+      - tmux
+      - ufw
+      - unattended-upgrades
+      - vim
+    state: present
+- name: Make sure podman resolves docker.io correctly without prefix
+  ansible.builtin.copy:
+    dest: /etc/containers/registries.conf.d/unqualified-search.conf
+    content: |
+      unqualified-search-registries = ['docker.io']
+    mode: '0644'
+- name: Make sure podman network works well with ufw
+  ansible.builtin.copy:
+    dest: /etc/containers/containers.conf
+    content: |
+      [network]
+      # We set iptables driver so it plays well with ufw that also uses iptables
+      firewall_driver = "iptables"
+    mode: '0644'
+- name: Configure uid/gid mapping ranges
+  ansible.builtin.lineinfile:
+    path: '{{ item }}'
+    regexp: '^containers:'
+    line: containers:10000000:10000000
+  loop:
+    - /etc/subgid
+    - /etc/subuid
+- name: Create Quadlet file for podman network
+  containers.podman.podman_network:
+    name: priv
+    state: quadlet
+    subnet: '{{ rapid_srv_podman_subnet }}'
+    gateway: '{{ rapid_srv_podman_gateway }}'
+    quadlet_options:
+      - Options=com.docker.network.bridge.name=podmanpriv
+- name: Start podman network
+  ansible.builtin.systemd_service:
+    name: priv-network.service
+    state: started
+    daemon_reload: true
+- name: Create /etc/systemd/network
+  ansible.builtin.file:
+    path: /etc/systemd/network
+    state: directory
+    mode: '0755'
+- name: Configure DNS resolution of podman containers from host
+  ansible.builtin.copy:
+    dest: /etc/systemd/network/90-podmanpriv.network
+    content: |
+      [Match]
+      Name=podmanpriv
+
+      [Network]
+      DNS={{ rapid_srv_podman_gateway }}
+      Domains=~dns.podman
+      KeepConfiguration=yes
+    mode: '0644'
+  notify: Reload systemd-networkd

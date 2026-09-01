@@ -1,0 +1,8 @@
+---
+domain_name: rapid.local
+rapid_srv_hostname: bar-rapid-test
+
+repos:
+  - name: chobby
+    origin: https://github.com/Spring-Chobby/Chobby.git
+    branch: master

@@ -1,0 +1,21 @@
+---
+- name: Allow and rate limit SSH
+  community.general.ufw:
+    rule: limit
+    name: OpenSSH
+- name: Allow HTTP and HTTPS
+  community.general.ufw:
+    rule: allow
+    name: WWW Full
+- name: Allow HTTP/3
+  community.general.ufw:
+    rule: allow
+    proto: udp
+    to_port: '443'
+- name: Default deny for incoming traffic
+  community.general.ufw:
+    default: deny
+    direction: incoming
+- name: Enable firewall
+  community.general.ufw:
+    state: enabled

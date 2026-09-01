@@ -1,0 +1,21 @@
+config:
+  # we run podman inside the incus container
+  security.nesting: true
+  # privileged needed to be able to use filesystem idmap
+  security.privileged: true
+  cloud-init.user-data: |
+    #cloud-config
+    package_update: true
+    package_upgrade: true
+    packages:
+      - openssh-server
+      - python3
+      - sudo
+    users:
+      - name: ansible
+        gecos: Ansible User
+        groups: sudo
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        ssh_authorized_keys:
+          - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIONZ6U04QLngsusEOKrg0FY/ZzpAi+vx6mhlOpfY95b1 ansible"

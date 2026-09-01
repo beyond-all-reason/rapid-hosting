@@ -1,0 +1,4 @@
+---
+- name: Attach client monitoring
+  ansible.builtin.import_role:
+    name: beyondallreason.monitoring.client

@@ -1,0 +1,21 @@
+---
+domain_name: repos.beyondallreason.dev
+
+# The host is shared with ansible-spads-setup, which sets this name.
+rapid_srv_hostname: spads-eu3
+
+configure_monitoring: true
+monitoring_write_instance_dev: false
+monitoring_metrics_write_password: "{{ vault_monitoring_metrics_write_password }}"
+monitoring_logs_write_password: "{{ vault_monitoring_logs_write_password }}"
+
+repos:
+  - name: chobby
+    origin: https://github.com/Spring-Chobby/Chobby.git
+    branch: master
+  - name: byar-chobby
+    origin: https://github.com/beyond-all-reason/BYAR-Chobby.git
+    branch: master
+  - name: byar
+    origin: https://github.com/beyond-all-reason/Beyond-All-Reason.git
+    branch: stable

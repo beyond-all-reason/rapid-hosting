@@ -1,0 +1,16 @@
+---
+- name: Set up rapid hosting server
+  hosts: all
+  become: true
+  roles:
+    - role: rapid-srv
+    - role: http_server
+      serving_root: '{{ repos_www_root }}'
+    - role: rapid_repos
+      www_root: '{{ repos_www_root }}'
+  tasks:
+    - name: Create index file
+      ansible.builtin.copy:
+        dest: '{{ repos_www_root }}/index.html'
+        content: '{{ domain_name }}'
+        mode: '0644'

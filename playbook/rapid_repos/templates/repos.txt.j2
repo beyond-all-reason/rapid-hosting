@@ -1,3 +1,0 @@
-{% for repo in repos %}
-{{ repo.name }},https://{{ repos_address_override|default(domain_name) }}/{{ repo.name }},,
-{% endfor %}

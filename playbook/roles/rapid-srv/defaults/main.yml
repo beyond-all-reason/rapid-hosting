@@ -1,0 +1,7 @@
+---
+# Hostname to set on the machine, empty keeps whatever the machine has already
+rapid_srv_hostname: ''
+
+# Private podman network all the service containers are attached to
+rapid_srv_podman_subnet: 10.89.1.0/24
+rapid_srv_podman_gateway: 10.89.1.1
