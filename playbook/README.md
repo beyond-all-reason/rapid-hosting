@@ -5,8 +5,9 @@ Rapid hosting
 Beyond All Reason rapid hosting server.
 
 It prepares the base system (packages, firewall, podman with a private network for
-service containers, monitoring) and, on top of it, serves the rapid repos with Caddy and
-keeps them up to date with [RapidTools](https://github.com/beyond-all-reason/RapidTools).
+service containers, monitoring) and, on top of it, serves the rapid repos with Caddy
+running in a container and keeps them up to date with
+[RapidTools](https://github.com/beyond-all-reason/RapidTools).
 
 Usage
 -----

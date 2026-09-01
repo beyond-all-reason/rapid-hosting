@@ -2,3 +2,13 @@
 - name: Attach client monitoring
   ansible.builtin.import_role:
     name: beyondallreason.monitoring.client
+  vars:
+    monitoring_scrape_configs:
+      01_caddy:
+        - job_name: caddy
+          static_configs:
+            - targets:
+                - caddy.dns.podman:2020
+          relabel_configs:
+            - target_label: instance
+              replacement: "{{ ansible_hostname }}"

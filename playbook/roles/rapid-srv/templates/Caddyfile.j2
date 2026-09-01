@@ -1,0 +1,15 @@
+{
+	default_sni {{ domain_name }}
+	metrics {
+		per_host
+	}
+}
+
+:2020 {
+	metrics
+}
+
+{{ domain_name }} {
+	root * {{ rapid_srv_caddy_repos_root }}
+	file_server
+}

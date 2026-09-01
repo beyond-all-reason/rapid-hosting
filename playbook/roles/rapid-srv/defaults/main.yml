@@ -5,3 +5,6 @@ rapid_srv_hostname: ''
 # Private podman network all the service containers are attached to
 rapid_srv_podman_subnet: 10.89.1.0/24
 rapid_srv_podman_gateway: 10.89.1.1
+
+# Path the repos root is mounted at inside the Caddy container
+rapid_srv_caddy_repos_root: /srv/repos

@@ -1,0 +1,49 @@
+---
+- name: Create repos root directory
+  ansible.builtin.file:
+    path: '{{ repos_www_root }}'
+    state: directory
+    mode: '0755'
+- name: Create caddy config directory
+  ansible.builtin.file:
+    path: /opt/caddy/config
+    state: directory
+    mode: '0755'
+- name: Write caddy config
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /opt/caddy/config/Caddyfile
+    mode: '0644'
+  notify: Reload Caddy
+- name: Set up Caddy container
+  containers.podman.podman_container:
+    name: caddy
+    state: quadlet
+    image: docker.io/library/caddy:2
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - '/opt/caddy/config:/etc/caddy:ro'
+      - '{{ repos_www_root }}:{{ rapid_srv_caddy_repos_root }}:idmap,ro'
+      - 'caddy_data:/data:idmap'
+      - 'caddy_config:/config:idmap'
+    network: priv.network
+    quadlet_options:
+      - 'AutoUpdate=registry'
+      - 'Pull=newer'
+      - 'UserNS=auto'
+      - |
+        [Install]
+        WantedBy=default.target
+      - |
+        [Service]
+        ExecReload=podman exec -w /etc/caddy caddy caddy reload
+  notify: Restart Caddy
+- name: Start and enable Caddy service
+  ansible.builtin.systemd_service:
+    name: caddy.service
+    enabled: true
+    state: started
+    daemon_reload: true

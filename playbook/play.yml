@@ -4,8 +4,6 @@
   become: true
   roles:
     - role: rapid-srv
-    - role: http_server
-      serving_root: '{{ repos_www_root }}'
     - role: rapid_repos
       www_root: '{{ repos_www_root }}'
   tasks:
