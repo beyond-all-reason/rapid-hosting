@@ -1,10 +1,20 @@
 import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { z } from "zod";
 import { refreshVersionsEdgeRule } from "./bunny.ts";
 import type { Config, RepoConfig } from "./config.ts";
 import { syncGitRepo } from "./git.ts";
 import { stepDuration } from "./metrics.ts";
 import { type Log, run } from "./run.ts";
+
+/**
+ * How much of a build reaches Bunny:
+ * - `publish`: full upload and changes edge rule
+ * - `dry-run`: only reads, don't change anything
+ * - `disabled`: never contacts it and needs no keys
+ */
+export const BunnyMode = z.enum(["publish", "dry-run", "disabled"]);
+export type BunnyMode = z.infer<typeof BunnyMode>;
 
 export async function runBuild(opts: {
 	bunny: Config["bunny"];
@@ -16,11 +26,10 @@ export async function runBuild(opts: {
 	dataDir: string;
 	bunnyApiKey: string;
 	bunnyStorageAccessKey: string;
-	/** Do not perform any *write* operation to Bunny. */
-	bunnyDryRun: boolean;
+	bunnyMode: BunnyMode;
 	log: Log;
 }): Promise<void> {
-	const { bunny, repoName, repo, commit, branch, version, bunnyDryRun, log } = opts;
+	const { bunny, repoName, repo, commit, branch, version, bunnyMode, log } = opts;
 	const gitDir = path.join(opts.dataDir, "git", repoName);
 	const storeDir = path.join(opts.dataDir, "store", repoName);
 	await mkdir(path.dirname(gitDir), { recursive: true });
@@ -40,12 +49,13 @@ export async function runBuild(opts: {
 
 	const url = `https://github.com/${repo.githubRepository}.git`;
 	await step("git_sync", () => syncGitRepo(log, gitDir, url, commit));
-	log(`Building ${repoName}:${branch} at ${commit}`);
-	if (bunnyDryRun) log("Bunny dry run: nothing will be published to Bunny");
+	log(`Building ${repoName}:${branch} at ${commit}. Bunny mode: ${bunnyMode}`);
 
 	const args = [gitDir, repo.modRoot, repo.modinfo, storeDir, commit, repoName, branch];
 	if (version !== undefined) args.push(version);
 	await step("rapid_buildgit", () => run("rapid-buildgit", args, { log }));
+
+	if (bunnyMode === "disabled") return;
 
 	// Order matters: versions.gz must go last so clients never see a version
 	// that references missing pool/package files.
@@ -62,7 +72,7 @@ export async function runBuild(opts: {
 					`--bunny-storage-zone=${bunny.storageZone}`,
 					`--bunny-endpoint=${new URL(bunny.storageUrl).host}`,
 					"--stats-log-level=NOTICE",
-					...(bunnyDryRun ? ["--dry-run"] : []),
+					...(bunnyMode === "dry-run" ? ["--dry-run"] : []),
 					...args,
 				],
 				{ env: { RCLONE_BUNNY_ACCESS_KEY: obscured.stdout.trim() }, log },
@@ -91,7 +101,7 @@ export async function runBuild(opts: {
 			bunny,
 			apiKey: opts.bunnyApiKey,
 			storageAccessKey: opts.bunnyStorageAccessKey,
-			dryRun: bunnyDryRun,
+			dryRun: bunnyMode === "dry-run",
 			log,
 		}),
 	);

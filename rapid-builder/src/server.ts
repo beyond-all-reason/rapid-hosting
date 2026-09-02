@@ -9,7 +9,7 @@ import {
 import type { JWTPayload } from "jose";
 import { z } from "zod";
 import type { TokenVerifier } from "./auth.ts";
-import type { runBuild } from "./build.ts";
+import type { BunnyMode, runBuild } from "./build.ts";
 import type { Config } from "./config.ts";
 import type { Logger } from "./log.ts";
 import * as metrics from "./metrics.ts";
@@ -69,7 +69,7 @@ export interface BuildServerDeps {
 	dataDir: string;
 	bunnyApiKey: string;
 	bunnyStorageAccessKey: string;
-	bunnyDryRun: boolean;
+	bunnyMode: BunnyMode;
 	/** How many builds may wait for a repo's lock before requests are shed. */
 	maxWaitingBuilds: number;
 	verifyToken: TokenVerifier;
@@ -180,7 +180,7 @@ export function createBuildServer(deps: BuildServerDeps): Server {
 					dataDir: deps.dataDir,
 					bunnyApiKey: deps.bunnyApiKey,
 					bunnyStorageAccessKey: deps.bunnyStorageAccessKey,
-					bunnyDryRun: deps.bunnyDryRun,
+					bunnyMode: deps.bunnyMode,
 					log,
 				});
 			});

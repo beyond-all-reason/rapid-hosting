@@ -134,7 +134,7 @@ Name a `bunny` block and pass the real keys. The service publishes to your
 storage zone, and the tokens are still the ones we sign:
 
 ```sh
-BASE_CONFIG=./config.json BUNNY_DRY_RUN=true \
+BASE_CONFIG=./config.json BUNNY_MODE=dry-run \
   BUNNY_API_KEY=... BUNNY_STORAGE_ACCESS_KEY=... \
   NODE_TLS_REJECT_UNAUTHORIZED=1 RCLONE_NO_CHECK_CERTIFICATE=false \
   docker compose up --build
@@ -144,8 +144,7 @@ The two certificate variables default to off in compose for the fake storage,
 which serves a self-signed certificate.
 
 > [!WARNING]
-> Keep `BUNNY_DRY_RUN` on until you mean to publish. Builds still run in full
-> and every Bunny read still happens, but nothing is written.
+> Keep `BUNNY_MODE=dry-run` or `BUNNY_MODE=disabled` until you mean to publish.
 
 ### Another repository
 

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import type { AddressInfo } from "node:net";
 import { z } from "zod";
 import { createOidcVerifier } from "./auth.ts";
-import { runBuild } from "./build.ts";
+import { BunnyMode, runBuild } from "./build.ts";
 import { loadConfig } from "./config.ts";
 import { logger } from "./log.ts";
 import * as metrics from "./metrics.ts";
@@ -28,8 +28,8 @@ const env = z
 		DATA_DIR: z.string().default("/data"),
 		/** Path to config.json; see src/config.ts for its schema. */
 		CONFIG_FILE: z.string().default("/etc/rapid-build/config.json"),
-		/** Rehearses a publish: we build and read as usual, but never write to Bunny. */
-		BUNNY_DRY_RUN: z.stringbool().default(false),
+		/** How much of a build reaches Bunny; see BunnyMode in src/build.ts. */
+		BUNNY_MODE: BunnyMode.default("publish"),
 		/** Secrets: each is `NAME` or `NAME_PATH`, see readSecret. */
 		BUNNY_API_KEY: z.string().min(1).optional(),
 		BUNNY_API_KEY_PATH: z.string().min(1).optional(),
@@ -57,10 +57,11 @@ async function readSecret(name: Secret): Promise<string> {
 	return secret;
 }
 
+const bunnyDisabled = env.BUNNY_MODE === "disabled";
 const [config, bunnyApiKey, bunnyStorageAccessKey] = await Promise.all([
 	loadConfig(env.CONFIG_FILE),
-	readSecret("BUNNY_API_KEY"),
-	readSecret("BUNNY_STORAGE_ACCESS_KEY"),
+	bunnyDisabled ? "" : readSecret("BUNNY_API_KEY"),
+	bunnyDisabled ? "" : readSecret("BUNNY_STORAGE_ACCESS_KEY"),
 ]);
 
 const server = createBuildServer({
@@ -68,7 +69,7 @@ const server = createBuildServer({
 	dataDir: env.DATA_DIR,
 	bunnyApiKey,
 	bunnyStorageAccessKey,
-	bunnyDryRun: env.BUNNY_DRY_RUN,
+	bunnyMode: env.BUNNY_MODE,
 	maxWaitingBuilds: 3,
 	verifyToken: createOidcVerifier(config.oidcIssuer),
 	build: runBuild,
@@ -91,7 +92,7 @@ for (const signal of ["SIGTERM", "SIGINT"] as const) {
 server.listen(env.PORT, () => {
 	const { port } = server.address() as AddressInfo;
 	logger.info(
-		{ port, repos: Object.keys(config.repos), bunnyDryRun: env.BUNNY_DRY_RUN },
+		{ port, repos: Object.keys(config.repos), bunnyMode: env.BUNNY_MODE },
 		"Listening for build requests",
 	);
 });

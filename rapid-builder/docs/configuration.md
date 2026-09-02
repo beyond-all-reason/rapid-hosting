@@ -14,6 +14,9 @@ The two Bunny keys are each given either literally in the variable or as the
 path to a file holding it in the `_PATH` one, see `readSecret` in the same
 file. [Deployment](deployment.md) has a compose file that uses the file form.
 
+`BUNNY_MODE` says how much of a build reaches Bunny, see `BunnyMode` in
+[src/build.ts](../src/build.ts).
+
 ## `config.json`
 
 The fields are declared by the `Config` schema in

@@ -79,7 +79,7 @@ const server = createBuildServer({
 	bunnyStorageAccessKey: "storage-key",
 	// Tests don't modify anything anyway, we set it only to verify it's passed
 	// correctly to build function.
-	bunnyDryRun: true,
+	bunnyMode: "dry-run",
 	maxWaitingBuilds: MAX_WAITING,
 	verifyToken: createOidcVerifier(issuer),
 	build: (opts) => {
@@ -262,7 +262,7 @@ test("an authorized request runs a build and gets its log back", async () => {
 	assert.equal(opts?.version, "1.2.3");
 	assert.equal(opts?.dataDir, "/nonexistent");
 	assert.equal(opts?.bunnyApiKey, "api-key");
-	assert.equal(opts?.bunnyDryRun, true, "the mode the service runs in reached the build");
+	assert.equal(opts?.bunnyMode, "dry-run", "the mode the service runs in reached the build");
 	assert.equal(opts?.bunny, config.bunny);
 	assert.equal(opts?.repo, config.repos.testrepo);
 

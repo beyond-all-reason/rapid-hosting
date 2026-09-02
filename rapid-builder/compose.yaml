@@ -39,7 +39,7 @@ services:
       # Prometheus metrics
       - "127.0.0.1:9464:9464"
     environment:
-      BUNNY_DRY_RUN: ${BUNNY_DRY_RUN:-false}
+      BUNNY_MODE: ${BUNNY_MODE:-publish}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       # What startSandbox in dev/sandbox.ts writes.
       CONFIG_FILE: /sandbox/config.json

@@ -51,7 +51,7 @@ test("the real pipeline", { skip: await toolsMissing(), timeout: 300_000 }, asyn
 	await writeFile(storageKeyFile, `${STORAGE_KEY}\n`); // add newline to test trimming
 
 	/** Starts the real service against the fakes above, plus any extra env. */
-	async function startService(extraEnv: Record<string, string> = {}) {
+	async function startService(extraEnv: Record<string, string> = {}, keys = true) {
 		const env: Record<string, string | undefined> = {
 			...process.env,
 			...sandbox.env,
@@ -62,7 +62,11 @@ test("the real pipeline", { skip: await toolsMissing(), timeout: 300_000 }, asyn
 		};
 		// One secret each way, so both forms are exercised for real.
 		delete env.BUNNY_STORAGE_ACCESS_KEY;
-		env.BUNNY_STORAGE_ACCESS_KEY_PATH = storageKeyFile;
+		if (keys) {
+			env.BUNNY_STORAGE_ACCESS_KEY_PATH = storageKeyFile;
+		} else {
+			delete env.BUNNY_API_KEY;
+		}
 
 		const srv = spawn(
 			process.execPath,
@@ -254,8 +258,8 @@ test("the real pipeline", { skip: await toolsMissing(), timeout: 300_000 }, asyn
 		git(["-c", "user.name=t", "-c", "user.email=t@t.invalid", "commit", "-qm", "add a plane"]);
 		const sha = git(["rev-parse", "HEAD"]);
 
-		// We have to start another service because dry run is part of environment.
-		const dryRun = await startService({ BUNNY_DRY_RUN: "1" });
+		// We have to start another service because the mode is part of environment.
+		const dryRun = await startService({ BUNNY_MODE: "dry-run" });
 		bunny.calls = [];
 
 		const res = await build({ commit: sha }, dryRun);
@@ -285,5 +289,30 @@ test("the real pipeline", { skip: await toolsMissing(), timeout: 300_000 }, asyn
 
 		dryRun.kill("SIGTERM");
 		assert.equal(await dryRun.exited, 0);
+	});
+
+	await t.test("a disabled Bunny builds without keys and never calls it", async () => {
+		await writeFile(path.join(originDir, "units", "sub.lua"), "return { hp = 400 }\n");
+		git(["add", "-A"]);
+		git(["-c", "user.name=t", "-c", "user.email=t@t.invalid", "commit", "-qm", "add a sub"]);
+		const sha = git(["rev-parse", "HEAD"]);
+
+		// No credentials of any kind, like a dev deployment without an account.
+		const disabled = await startService({ BUNNY_MODE: "disabled" }, false);
+		bunny.calls = [];
+
+		const res = await build({ commit: sha }, disabled);
+		assert.equal(res.status, 200, res.text);
+		assert.equal((await storeFiles("packages")).length, 4, "a package for the new commit");
+		const versions = gunzipSync(await readFile(path.join(storeDir, "versions.gz"))).toString();
+		assert.match(
+			versions,
+			new RegExp(`^testrepo:pr-7,[0-9a-f]{32},,Test Game pr-7-\\d+-${sha.slice(0, 7)}$`, "m"),
+			`the tag moved locally: ${versions}`,
+		);
+		assert.deepEqual(bunny.calls, [], "not one request to Bunny, not even a read");
+
+		disabled.kill("SIGTERM");
+		assert.equal(await disabled.exited, 0);
 	});
 });
