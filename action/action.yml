@@ -1,0 +1,40 @@
+name: Rapid build
+description: Builds a commit and publishes it as a rapid tag.
+inputs:
+  url:
+    description: The service's build endpoint, e.g. https://rapid-build.example.com/build
+    required: true
+  repo:
+    description: Rapid repo to build, by its name in the service's config.
+    required: true
+  branch:
+    description: Rapid branch to publish, so the tag becomes "<repo>:<branch>".
+    required: true
+  version:
+    description: Optional version name for the tag replacing the generated one.
+    default: ""
+  commit:
+    description: Full sha to build. Defaults to the commit that triggered the workflow.
+    default: ${{ github.sha }}
+  audience:
+    description: OIDC audience the service accepts. Defaults to url.
+    default: ""
+  retry-budget:
+    description: >-
+      Retries stop once the total wait would pass this many seconds. The first
+      retry waits 60s, each next one twice as long.
+    default: "900"
+runs:
+  using: composite
+  steps:
+    - name: Trigger rapid build
+      shell: bash
+      env:
+        INPUT_URL: ${{ inputs.url }}
+        INPUT_REPO: ${{ inputs.repo }}
+        INPUT_BRANCH: ${{ inputs.branch }}
+        INPUT_COMMIT: ${{ inputs.commit }}
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_AUDIENCE: ${{ inputs.audience }}
+        INPUT_RETRY_BUDGET: ${{ inputs.retry-budget }}
+      run: "$GITHUB_ACTION_PATH/rapid-build.sh"

@@ -3,7 +3,7 @@
 ## `POST /build`
 
 The whole request is in the URL, there is no body. The token is the GitHub
-Actions OIDC token.
+Actions OIDC token, see [the GitHub Actions action](../../action/).
 
 ```
 POST /build?repo=byar&branch=pr-1234&commit=6d3f9e0a1b2c3d4e5f60718293a4b5c6d7e8f900
