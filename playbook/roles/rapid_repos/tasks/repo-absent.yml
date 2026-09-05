@@ -1,0 +1,45 @@
+---
+# Drops only the configuration of the repo. Its git clone and built repo are
+# either handed over to the builder that took the repo over, or left where they
+# are, but never dropped.
+- name: Stop and disable systemd timer for updating {{ repo.name }}
+  ansible.builtin.systemd:
+    # replace simulated systemd-escape for the single allowed character needing it
+    name: "update-rapid-repo@{{ repo.name | replace('-', '\\x2d') }}.timer"
+    state: stopped
+    enabled: no
+# The config file doubles as the update lock, so removing it under a running
+# update would let a concurrent one start. Builds are bounded by the unit's
+# TimeoutSec, so this waits at most as long as that.
+- name: Wait for a running update of {{ repo.name }} to finish
+  ansible.builtin.systemd:
+    name: "update-rapid-repo@{{ repo.name | replace('-', '\\x2d') }}.service"
+  register: repo_update
+  until: repo_update.status.ActiveState not in ['active', 'activating', 'deactivating']
+  retries: 60
+  delay: 10
+  when: not ansible_check_mode
+- name: Remove repo {{ repo.name }} config
+  ansible.builtin.file:
+    state: absent
+    path: '{{ config_root }}/repo-{{ repo.name }}.json'
+
+# Safe only now that the timer is stopped and the config is gone, so nothing can
+# still be writing to these. mv -T takes over the empty directory the builder
+# leaves behind, and refuses a non-empty one instead of nesting the repo inside
+# it. removes makes a rerun, where the sources are gone, a no-op.
+- name: Hand {{ repo.name }} over to the builder that took it over
+  ansible.builtin.command:
+    cmd: 'mv -T {{ item.src | quote }} {{ item.dest | quote }}'
+    removes: '{{ item.src }}'
+  loop:
+    - src: '{{ git_root }}/{{ repo.name }}'
+      dest: '{{ handover_git_root }}/{{ repo.name }}'
+    - src: '{{ www_root }}/{{ repo.name }}'
+      dest: '{{ handover_www_root }}/{{ repo.name }}'
+  loop_control:
+    label: '{{ item.dest }}'
+  when:
+    - handover_git_root | length > 0
+    - handover_www_root | length > 0
+    - repo.name in extra_repo_names

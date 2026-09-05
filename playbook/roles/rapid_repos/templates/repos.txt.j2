@@ -1,4 +1,4 @@
-{% for repo in repos %}
+{% for repo in repos if repo.state | default('present') == 'present' %}
 {{ repo.name }},https://{{ domain_name }}/{{ repo.name }},,
 {% endfor %}
 {% for name in extra_repo_names %}

@@ -7,6 +7,10 @@
     - role: rapid_repos
       www_root: '{{ repos_www_root }}'
       extra_repo_names: '{{ builder_repos | list }}'
+      # A repo marked absent that the builder has taken over hands its data to
+      # it, see how runBuild lays DATA_DIR out in rapid-builder/src/build.ts.
+      handover_git_root: '{{ rapid_srv_builder_root }}/data/git'
+      handover_www_root: '{{ rapid_srv_builder_root }}/data/store'
   tasks:
     - name: Create index file
       ansible.builtin.copy:

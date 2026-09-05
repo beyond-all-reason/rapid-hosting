@@ -7,3 +7,10 @@ rapidtools_deb: https://github.com/beyond-all-reason/RapidTools/releases/downloa
 # Repos built by something else but served from this domain. They only need
 # to be listed in repos.txt, so only the names are needed.
 extra_repo_names: []
+
+# Where the data of a repo handed over to the builder of one of the
+# extra_repo_names goes. When both are set, marking a repo absent moves its git
+# clone and built files there instead of leaving them in place. See the
+# migration section of the playbook README.
+handover_git_root: ''
+handover_www_root: ''

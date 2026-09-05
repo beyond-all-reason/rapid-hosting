@@ -1,17 +1,20 @@
 ---
 - name: Create rapid builder directories
   ansible.builtin.file:
-    path: "/opt/rapid-build/{{ item }}"
+    path: "{{ rapid_srv_builder_root }}/{{ item }}"
     state: directory
     mode: "0755"
   loop:
     - config
     - data
-    # Caddy mounts the store, so it has to exist before the first build.
+    # Caddy mounts the store, so it has to exist before the first build. The
+    # builder creates both itself, but a repo handed over from RapidTools is
+    # moved in before it ever builds it.
     - data/store
+    - data/git
 - name: Write rapid builder config
   ansible.builtin.copy:
-    dest: /opt/rapid-build/config/config.json
+    dest: "{{ rapid_srv_builder_root }}/config/config.json"
     content: "{{ builder_config | to_nice_json }}"
     mode: "0644"
   vars:
@@ -45,10 +48,10 @@
     # rapid-builder/docs/deployment.md. TimeoutStopSec below must be longer.
     stop_timeout: 300
     volumes:
-      - "/opt/rapid-build/config:/etc/rapid-build:idmap,ro"
+      - "{{ rapid_srv_builder_root }}/config:/etc/rapid-build:idmap,ro"
       # The service runs as uid 1000 in the container, map it to root on the
       # host so it owns the state it writes there.
-      - "/opt/rapid-build/data:/data:idmap=uids=@0-1000-1;gids=@0-1000-1"
+      - "{{ rapid_srv_builder_root }}/data:/data:idmap=uids=@0-1000-1;gids=@0-1000-1"
     secrets:
       - bunny_api_key
       - bunny_storage_access_key

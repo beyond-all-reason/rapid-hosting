@@ -15,6 +15,14 @@ argument_specs:
         type: 'list'
         elements: 'str'
         description: 'Names of repos served from this domain but built elsewhere'
+      handover_git_root:
+        required: false
+        type: 'str'
+        description: 'Where the git clone of a repo handed over to another builder is moved'
+      handover_www_root:
+        required: false
+        type: 'str'
+        description: 'Where the built files of a repo handed over to another builder are moved'
       repos:
         required: true
         type: 'list'
@@ -33,3 +41,11 @@ argument_specs:
             required: true
             type: 'str'
             description: 'Branch name to clone'
+          state:
+            required: false
+            type: 'str'
+            default: 'present'
+            choices: ['present', 'absent']
+            description: >-
+              When absent, the repo configuration is removed and it stops being
+              built and served, but its git clone and built files are kept.

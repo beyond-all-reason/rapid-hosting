@@ -48,6 +48,51 @@ ansible-playbook -l prod play.yml --check --diff
 
 Then drop the `--check` flag to actually apply the changes.
 
+Migrating a repo from RapidTools to rapid-builder
+------------------------------------------------
+
+Both builders keep a git clone and a built repo per rapid repo, just in different places,
+so a repo moves over without rebuilding it from scratch. The playbook does the move, in
+one run:
+
+1. In the host's group vars, mark the repo `state: absent` in `repos`, keeping the rest of
+   its entry, and add it to `builder_repos` under the same name:
+
+   ```yaml
+   repos:
+     - name: chobby
+       origin: https://github.com/Spring-Chobby/Chobby.git
+       branch: master
+       state: absent
+
+   builder_repos:
+     chobby:
+       githubRepository: Spring-Chobby/Chobby
+       policy: "..."
+   ```
+
+2. Run the playbook. It stops and disables the update timer, waits for an update that is
+   already running to finish, removes the repo config, and only then moves the data into
+   the builder's layout:
+
+   ```text
+   /var/local/rapid-repos/chobby -> /opt/rapid-build/data/git/chobby
+   /var/www/repos/chobby         -> /opt/rapid-build/data/store/chobby
+   ```
+
+   Caddy serves the repo from the builder's store from that run on. The builder repoints
+   `origin` and force checks out on every build, so it picks the clone up as it is, and
+   both builders run `rapid-buildgit` with the same mod root and modinfo, so the pool is
+   reused rather than rebuilt.
+
+3. Once the first build through the builder has gone through, drop the repo's now unused
+   `repos` entry.
+
+Marking a repo absent without a `builder_repos` entry of the same name leaves its git
+clone and built repo where they are and only drops the configuration, so the data is still
+there to be moved by hand. The move never overwrites: if the builder already has data
+under that name, the playbook fails instead of touching either side.
+
 Local testing
 -------------
 
