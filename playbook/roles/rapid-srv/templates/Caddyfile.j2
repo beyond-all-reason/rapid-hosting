@@ -10,6 +10,23 @@
 }
 
 {{ domain_name }} {
-	root * {{ rapid_srv_caddy_repos_root }}
-	file_server
+	# A build reports its outcome with the chunked framing, so the response
+	# must not be buffered, see rapid-builder/docs/api.md.
+	handle /build {
+		reverse_proxy rapid-build.dns.podman:8080 {
+			flush_interval -1
+		}
+	}
+
+{% for name in builder_repos %}
+	handle /{{ name }}/* {
+		root * /srv/build-repos
+		file_server
+	}
+
+{% endfor %}
+	handle {
+		root * {{ rapid_srv_caddy_repos_root }}
+		file_server
+	}
 }

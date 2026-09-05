@@ -3,3 +3,7 @@ git_root: /var/local/rapid-repos
 config_root: /usr/local/etc/rapid-repos
 bin_root: /usr/local/bin
 rapidtools_deb: https://github.com/beyond-all-reason/RapidTools/releases/download/v0.2.2/rapidtools_0.2.2-0+debian13_amd64.deb
+
+# Repos built by something else but served from this domain. They only need
+# to be listed in repos.txt, so only the names are needed.
+extra_repo_names: []

@@ -6,6 +6,7 @@
     - role: rapid-srv
     - role: rapid_repos
       www_root: '{{ repos_www_root }}'
+      extra_repo_names: '{{ builder_repos | list }}'
   tasks:
     - name: Create index file
       ansible.builtin.copy:

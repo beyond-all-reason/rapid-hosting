@@ -5,3 +5,11 @@ repos_www_root: /var/www/repos
 # Send metrics and logs to a monitoring server set up with ansible-monitoring.
 # Needs the monitoring write credentials when pointing at the prod instance.
 configure_monitoring: false
+
+# Rapid repos the builder may build. Caddy serves them from the same domain as
+# the RapidTools ones, so the names must not clash with the repos list.
+# For configuration see rapid-builder/docs/configuration.md
+builder_repos:
+  minitest:
+    githubRepository: p2004a/minimal-rapid-repo
+    policy: "true"

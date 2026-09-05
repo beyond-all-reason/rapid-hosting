@@ -1,0 +1,75 @@
+---
+- name: Create rapid builder directories
+  ansible.builtin.file:
+    path: "/opt/rapid-build/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - config
+    - data
+    # Caddy mounts the store, so it has to exist before the first build.
+    - data/store
+- name: Write rapid builder config
+  ansible.builtin.copy:
+    dest: /opt/rapid-build/config/config.json
+    content: "{{ builder_config | to_nice_json }}"
+    mode: "0644"
+  vars:
+    # See rapid-builder/docs/configuration.md
+    builder_config:
+      audience: "https://{{ domain_name }}/build"
+      bunny: "{{ rapid_srv_builder_bunny }}"
+      repos: "{{ builder_repos }}"
+  notify: Restart rapid builder
+- name: Create Bunny secrets
+  containers.podman.podman_secret:
+    state: present
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+  loop:
+    - name: bunny_api_key
+      data: "{{ rapid_srv_bunny_api_key }}"
+    - name: bunny_storage_access_key
+      data: "{{ rapid_srv_bunny_storage_access_key }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Restart rapid builder
+- name: Set up rapid builder container
+  containers.podman.podman_container:
+    name: rapid-build
+    state: quadlet
+    image: ghcr.io/beyond-all-reason/rapid-builder:latest
+    network: priv.network
+    log_driver: journald
+    # On SIGTERM the service finishes the builds in flight first, see
+    # rapid-builder/docs/deployment.md. TimeoutStopSec below must be longer.
+    stop_timeout: 300
+    volumes:
+      - "/opt/rapid-build/config:/etc/rapid-build:idmap,ro"
+      # The service runs as uid 1000 in the container, map it to root on the
+      # host so it owns the state it writes there.
+      - "/opt/rapid-build/data:/data:idmap=uids=@0-1000-1;gids=@0-1000-1"
+    secrets:
+      - bunny_api_key
+      - bunny_storage_access_key
+    env:
+      BUNNY_MODE: "{{ rapid_srv_bunny_mode }}"
+      BUNNY_API_KEY_PATH: /run/secrets/bunny_api_key
+      BUNNY_STORAGE_ACCESS_KEY_PATH: /run/secrets/bunny_storage_access_key
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - "UserNS=auto"
+      - |
+        [Install]
+        WantedBy=default.target
+      - |
+        [Service]
+        TimeoutStopSec=310
+  notify: Restart rapid builder
+- name: Start and enable rapid builder service
+  ansible.builtin.systemd_service:
+    name: rapid-build.service
+    enabled: true
+    state: started
+    daemon_reload: true

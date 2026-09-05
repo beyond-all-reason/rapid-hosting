@@ -4,10 +4,12 @@ Rapid hosting
 [Ansible](<https://en.wikipedia.org/wiki/Ansible_(software)>) playbook for setting up the
 Beyond All Reason rapid hosting server.
 
-It prepares the base system (packages, firewall, podman with a private network for
-service containers, monitoring) and, on top of it, serves the rapid repos with Caddy
-running in a container and keeps them up to date with
-[RapidTools](https://github.com/beyond-all-reason/RapidTools).
+The server serves rapid repos with Caddy. Two things build them:
+
+- [RapidTools](https://github.com/beyond-all-reason/RapidTools) rebuilds the main game
+  repos from their git branches on a timer.
+- [rapid-builder](../rapid-builder/) builds a repo when a GitHub Actions workflow asks for
+  it through [the action](../action/).
 
 Usage
 -----
@@ -111,6 +113,13 @@ PRD_RAPID_REPO_MASTER=https://rapid.local/repos.gz \
   pr-downloader --filesystem-writepath /tmp/prd --download-game chobby:test
 ```
 
+#### Rapid builder
+
+In dev the builder runs with Bunny disabled, so it doesn't need credentials and
+doesn't upload anything. The token comes from a real GitHub Actions run, so for
+testing the service prefer the docker compose setup in
+[rapid-builder](../rapid-builder).
+
 #### Monitoring host
 
 To configure sending metrics and logs to a local monitoring host set up with the
@@ -121,6 +130,14 @@ run:
 MON_HOST_IP=$(incus list -f csv -c 4 bar-mon-test | grep -E 'eth|enp' | cut -d' ' -f1)
 ansible-playbook -l dev play.yml --diff -t monitoring \
   -e "{ configure_monitoring: true, monitoring_write_host_ip: $MON_HOST_IP }"
+```
+
+The builder's logs arrive in VictoriaLogs as the `rapid-build` stream. To query it on the
+monitoring host directly:
+
+```sh
+incus exec bar-mon-test -- curl -sG http://victorialogs.dns.podman:9428/select/logsql/query \
+  --data-urlencode 'query=stream:rapid-build | sort by (_time) desc' --data-urlencode 'limit=5'
 ```
 
 ### Cleanup

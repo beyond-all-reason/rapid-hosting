@@ -1,3 +1,6 @@
 {% for repo in repos %}
 {{ repo.name }},https://{{ domain_name }}/{{ repo.name }},,
 {% endfor %}
+{% for name in extra_repo_names %}
+{{ name }},https://{{ domain_name }}/{{ name }},,
+{% endfor %}

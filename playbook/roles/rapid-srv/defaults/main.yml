@@ -1,6 +1,6 @@
 ---
 # Hostname to set on the machine, empty keeps whatever the machine has already
-rapid_srv_hostname: ''
+rapid_srv_hostname: ""
 
 # Private podman network all the service containers are attached to
 rapid_srv_podman_subnet: 10.89.1.0/24
@@ -8,3 +8,19 @@ rapid_srv_podman_gateway: 10.89.1.1
 
 # Path the repos root is mounted at inside the Caddy container
 rapid_srv_caddy_repos_root: /srv/repos
+
+# How much of a build reaches Bunny: publish, dry-run or disabled. See BunnyMode
+# in rapid-builder/src/build.ts. Only disabled works without the keys below.
+rapid_srv_bunny_mode: disabled
+
+# The "bunny" object of the builder's config.json, see
+# rapid-builder/docs/configuration.md. The schema requires it even with the mode
+# disabled, so the defaults are placeholders.
+rapid_srv_builder_bunny:
+  storageZone: placeholder-zone
+  storageUrl: https://storage.bunnycdn.com
+  pullZone: placeholder-pull-zone
+  baseUrl: https://placeholder.invalid
+
+rapid_srv_bunny_api_key: not_set
+rapid_srv_bunny_storage_access_key: not_set

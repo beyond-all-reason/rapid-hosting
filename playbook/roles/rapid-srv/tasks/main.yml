@@ -5,6 +5,9 @@
 - name: Set up firewall
   ansible.builtin.import_tasks: firewall.yml
   tags: firewall
+- name: Set up rapid builder
+  ansible.builtin.import_tasks: builder.yml
+  tags: builder
 - name: Set up containers
   ansible.builtin.import_tasks: containers.yml
   tags: containers

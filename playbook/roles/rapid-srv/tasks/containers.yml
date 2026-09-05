@@ -27,6 +27,7 @@
     volumes:
       - '/opt/caddy/config:/etc/caddy:ro'
       - '{{ repos_www_root }}:{{ rapid_srv_caddy_repos_root }}:idmap,ro'
+      - '/opt/rapid-build/data/store:/srv/build-repos:idmap,ro'
       - 'caddy_data:/data:idmap'
       - 'caddy_config:/config:idmap'
     network: priv.network

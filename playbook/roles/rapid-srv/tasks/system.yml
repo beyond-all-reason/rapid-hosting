@@ -44,6 +44,11 @@
   loop:
     - /etc/subgid
     - /etc/subuid
+- name: Enable podman auto update
+  ansible.builtin.systemd_service:
+    name: podman-auto-update.timer
+    enabled: true
+    state: started
 - name: Create Quadlet file for podman network
   containers.podman.podman_network:
     name: priv

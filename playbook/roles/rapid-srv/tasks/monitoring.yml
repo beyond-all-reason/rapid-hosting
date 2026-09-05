@@ -12,3 +12,15 @@
           relabel_configs:
             - target_label: instance
               replacement: "{{ ansible_hostname }}"
+      02_rapid_build:
+        - job_name: rapid-build
+          static_configs:
+            - targets:
+                - rapid-build.dns.podman:9464
+          relabel_configs:
+            - target_label: instance
+              replacement: "{{ ansible_hostname }}"
+    monitoring_log_configs:
+      fluent_bit:
+        - template: fluent-bit.yaml.j2
+          dest_name: rapid-build.yaml

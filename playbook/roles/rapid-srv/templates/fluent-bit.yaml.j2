@@ -1,0 +1,58 @@
+pipeline:
+  inputs:
+    # _SYSTEMD_UNIT gets the container output and podman's events, UNIT gets
+    # systemd's messages about the unit.
+    - name: systemd
+      tag: rapid-build
+      systemd_filter:
+        - _SYSTEMD_UNIT=rapid-build.service
+        - UNIT=rapid-build.service
+      systemd_filter_type: or
+      db: /var/lib/fluent-bit/rapid-build.db
+      read_from_tail: true
+      strip_underscores: true
+
+    # TODO: Move to the common annealing-monitoring role.
+    - name: systemd
+      tag: podman-auto-update
+      systemd_filter:
+        - _SYSTEMD_UNIT=podman-auto-update.service
+        - UNIT=podman-auto-update.service
+      systemd_filter_type: or
+      db: /var/lib/fluent-bit/podman-auto-update.db
+      read_from_tail: true
+      strip_underscores: true
+
+  filters:
+    # The service writes one JSON object per line, we keep only its fields.
+    - name: parser
+      match: rapid-build
+      key_name: MESSAGE
+      parser: rapid_build_json
+
+    # A line that is not JSON, from podman, systemd or a crash before the logger
+    # ran, still has MESSAGE. Keep only that, the rest of the journal record is
+    # a few kB of image labels and command lines.
+    - name: lua
+      match_regex: ^(rapid-build|podman-auto-update)$
+      call: to_stream
+      code: |
+        function to_stream(tag, timestamp, record)
+           if record["MESSAGE"] ~= nil then
+              record = { message = record["MESSAGE"] }
+           end
+           record["stream"] = tag
+           return 1, timestamp, record
+        end
+
+    # The output posts _msg_field=message, pino names it msg.
+    - name: modify
+      match: rapid-build
+      rename:
+        - msg message
+
+parsers:
+  - name: rapid_build_json
+    format: json
+    time_key: time
+    time_format: '%Y-%m-%dT%H:%M:%S.%LZ'
