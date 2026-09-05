@@ -108,6 +108,7 @@ export function createBuildServer(deps: BuildServerDeps): Server {
 				{ headers: { "www-authenticate": 'Bearer error="invalid_token"' } },
 			);
 		}
+		logger.trace({ claims }, "Verified OIDC token");
 
 		const parsed = BuildParams.safeParse(Object.fromEntries(url.searchParams));
 		if (!parsed.success) throw new HttpError(400, z.prettifyError(parsed.error));
