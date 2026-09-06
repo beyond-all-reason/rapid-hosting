@@ -9,18 +9,27 @@ monitoring_write_instance_dev: false
 monitoring_metrics_write_password: "{{ vault_monitoring_metrics_write_password }}"
 monitoring_logs_write_password: "{{ vault_monitoring_logs_write_password }}"
 
-rapid_srv_bunny_mode: dry-run
+rapid_srv_bunny_mode: publish
 rapid_srv_builder_bunny: "{{ vault_rapid_srv_builder_bunny }}"
 rapid_srv_bunny_api_key: "{{ vault_bunny_api_key }}"
 rapid_srv_bunny_storage_access_key: "{{ vault_bunny_storage_access_key }}"
+
+builder_repos:
+  byar-chobby:
+    githubRepository: beyond-all-reason/BYAR-Chobby
+    policy: >
+      claims.event_name == 'push' && claims.ref == 'refs/heads/master' &&
+      !has(request.version) && request.branch == 'test'
 
 repos:
   - name: chobby
     origin: https://github.com/Spring-Chobby/Chobby.git
     branch: master
+    state: absent
   - name: byar-chobby
     origin: https://github.com/beyond-all-reason/BYAR-Chobby.git
     branch: master
+    state: absent
   - name: byar
     origin: https://github.com/beyond-all-reason/Beyond-All-Reason.git
     branch: stable
