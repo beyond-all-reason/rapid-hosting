@@ -20,6 +20,13 @@ builder_repos:
     policy: >
       claims.event_name == 'push' && claims.ref == 'refs/heads/master' &&
       !has(request.version) && request.branch == 'test'
+  byar:
+    githubRepository: beyond-all-reason/Beyond-All-Reason
+    policy: >
+      !has(request.version) && (
+        (claims.ref == 'refs/heads/stable' && claims.event_name == 'push' && request.branch == 'test') ||
+        (claims.ref == 'refs/heads/master' && claims.event_name == 'workflow_dispatch' && request.branch.matches(r'^(pr:[0-9]+|br:.*)$'))
+      )
 
 repos:
   - name: chobby
@@ -33,3 +40,4 @@ repos:
   - name: byar
     origin: https://github.com/beyond-all-reason/Beyond-All-Reason.git
     branch: stable
+    state: absent
