@@ -299,8 +299,8 @@ test("a branch and a version may be named after a git ref", async () => {
 	onBuild = async (opts) => {
 		opts.log("done");
 	};
-	const branch = "release/1.2:rc.1";
-	const version = "release/1.2:rc.1-4-9f3ab21";
+	const branch = "release/1.2-rc.1";
+	const version = "release/1.2-rc.1-4-9f3ab21";
 
 	const res = await build(await mint(), { branch, version });
 

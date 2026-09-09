@@ -25,7 +25,7 @@ builder_repos:
     policy: >
       !has(request.version) && (
         (claims.ref == 'refs/heads/stable' && claims.event_name == 'push' && request.branch == 'test') ||
-        (claims.ref == 'refs/heads/master' && claims.event_name == 'workflow_dispatch' && request.branch.matches(r'^(pr:[0-9]+|br:.*)$'))
+        (claims.ref == 'refs/heads/master' && claims.event_name == 'workflow_dispatch' && request.branch.matches(r'^(pr-[0-9]+|br-.*)$'))
       )
 
 repos:

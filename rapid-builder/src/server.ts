@@ -22,11 +22,11 @@ const BuildParams = z.strictObject({
 	/** Repo to build, by its name in the config. It is rapid-buildgit's prefix. */
 	repo: z.string(),
 	/** Rapid branch to publish: the build becomes "<repo>:<branch>". */
-	branch: z.string().regex(/^(?!.*\.\.)[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,63}$/),
+	branch: z.string().regex(/^(?!.*\.\.)[a-zA-Z0-9][a-zA-Z0-9._/-]{0,63}$/),
 	/** Replaces rapid-buildgit's generated "{branch}-{commit count}-{short sha}". */
 	version: z
 		.string()
-		.regex(/^(?!.*\.\.)[a-zA-Z0-9][ a-zA-Z0-9._:+/-]{0,62}[a-zA-Z0-9]$/)
+		.regex(/^(?!.*\.\.)[a-zA-Z0-9][ a-zA-Z0-9._+/-]{0,62}[a-zA-Z0-9]$/)
 		.optional(),
 	/** Full sha of the commit to build. The caller resolves the ref it wants. */
 	commit: z.string().regex(/^[0-9a-f]{40}$/),
