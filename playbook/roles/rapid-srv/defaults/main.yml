@@ -3,8 +3,8 @@
 rapid_srv_hostname: ""
 
 # Private podman network all the service containers are attached to
-rapid_srv_podman_subnet: 10.89.1.0/24
-rapid_srv_podman_gateway: 10.89.1.1
+rapid_srv_podman_subnet: 10.89.0.0/24
+rapid_srv_podman_gateway: 10.89.0.1
 
 # Root of the rapid builder's state on the host. It holds its config and, under
 # data/, the git clones and built repos, see rapid-builder/docs/deployment.md.

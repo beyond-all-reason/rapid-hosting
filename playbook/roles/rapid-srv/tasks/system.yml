@@ -49,6 +49,11 @@
     name: podman-auto-update.timer
     enabled: true
     state: started
+# Changing rapid_srv_podman_subnet/gateway on an existing host doesn't
+# take effect, not even after a reboot. priv-network.service runs `podman network
+# create --ignore`, which keeps the existing `priv` network.
+# TODO(Debian 14 upgrade): podman >= 5.5 supports `NetworkDeleteOnStop=true`
+# in the quadlet.
 - name: Create Quadlet file for podman network
   containers.podman.podman_network:
     name: priv
