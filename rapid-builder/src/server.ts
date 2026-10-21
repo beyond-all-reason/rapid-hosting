@@ -61,6 +61,7 @@ class HttpError extends Error {
  * after sending 200 status code in headers. The FIN is queued behind data.
  */
 function truncate(res: ServerResponse): void {
+	while (res.writableCorked > 0) res.uncork();
 	res.socket?.end();
 }
 
