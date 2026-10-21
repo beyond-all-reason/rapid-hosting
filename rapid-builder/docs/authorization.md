@@ -2,7 +2,6 @@
 
 A build request is authorized in two steps, both in
 [src/policy.ts](../src/policy.ts):
-
 1. The token's `repository` claim must equal the repo's `githubRepository`,
    case-insensitively. No policy can widen this, so one repo's workflows can
    never publish another's packages, and a policy need not pin
@@ -19,7 +18,6 @@ policy still cannot produce a hostile name.
 
 Two variables are in scope, declared by `environment` in
 [src/policy.ts](../src/policy.ts). Naming anything else fails the load.
-
 - `claims`: the verified OIDC token's claims. GitHub documents them in
   [Understanding the OIDC token](https://docs.github.com/en/actions/concepts/security/openid-connect#understanding-the-oidc-token)
   and [OIDC token claims](https://docs.github.com/en/actions/reference/security/oidc#oidc-token-claims).
@@ -45,9 +43,8 @@ branch, the request sets no version, and the rapid branch it publishes is
 
 [The CEL language definition](https://github.com/cel-expr/cel-spec/blob/master/doc/langdef.md)
 covers the language. Three things bite here in particular:
-
 - **Reading a value that is not there is an error, not `false`.**
-  `claims.environment == 'prod'` *fails* for a token without that claim, and so
+  `claims.environment == 'prod'` _fails_ for a token without that claim, and so
   does `request.version == '1.0'` for a request that set no version. Guard with
   `has(...) && ...` whenever the value is not always present.
 - **`matches()` is unanchored.** `request.branch.matches('pr-[0-9]+')` also

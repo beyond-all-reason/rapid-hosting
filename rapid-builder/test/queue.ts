@@ -27,7 +27,11 @@ function build(queue: ReposQueue, repo: string, name: string, trace: string[]): 
 async function gauges(repo: string): Promise<{ running?: number; waiting?: number }> {
 	const { values } = await queuedBuilds.get();
 	const read = (state: string) =>
-		values.find((v) => v.labels.repo === repo && v.labels.state === state)?.value;
+		values.find((v) => {
+			// @prometheus-io/client types multi-label `labels` too loosely to read several keys.
+			const labels: Partial<Record<"repo" | "state", string | number>> = v.labels;
+			return labels.repo === repo && labels.state === state;
+		})?.value;
 	return { running: read("running"), waiting: read("waiting") };
 }
 
