@@ -143,7 +143,8 @@ export function createBuildServer(deps: BuildServerDeps): Server {
 		res.on("error", (err) => buildLog.warn({ err }, "Build response stream failed"));
 		const logLine = (level: "info" | "error", line: string, fields: object = {}) => {
 			if (!res.writableEnded && !res.destroyed) res.write(`${line}\n`);
-			buildLog[level](fields, line);
+			// VictoriaLogs treats an empty message as missing.
+			if (line.trim() !== "") buildLog[level](fields, line);
 		};
 		const log: Log = (line) => logLine("info", line);
 		logLine(
