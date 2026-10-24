@@ -9,5 +9,10 @@
 		"lineEnding": "auto",
 		"indentWidth": 4,
 		"lineWidth": 100
+	},
+	"yaml": {
+		"formatter": {
+			"indentWidth": 2
+		}
 	}
 }
