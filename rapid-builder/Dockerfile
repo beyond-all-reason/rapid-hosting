@@ -2,7 +2,7 @@
 # https://github.com/rclone/rclone/pull/9261 is merged and released.
 FROM golang:1.27.0-trixie AS rclone
 ARG RCLONE_REPO=https://github.com/istr/rclone.git
-ARG RCLONE_COMMIT=ffc797f1db617e1c65ac688d7f228faec5c2cfae
+ARG RCLONE_COMMIT=b7f203b914d494cfbc8857df26579082a12654e3
 RUN git clone --branch bunny-api-backend "$RCLONE_REPO" /src \
  && git -C /src checkout "$RCLONE_COMMIT"
 WORKDIR /src
@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o /rclone .
 
 # Base application image with all dependencies
 FROM node:26.13.1-trixie-slim AS base
-ARG RAPIDTOOLS_DEB=https://github.com/beyond-all-reason/RapidTools/releases/download/v0.3.0/rapidtools_0.3.0-0%2Bdebian13_amd64.deb
+ARG RAPIDTOOLS_DEB=https://github.com/beyond-all-reason/RapidTools/releases/download/v0.3.1/rapidtools_0.3.1-0%2Bdebian13_amd64.deb
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl git \
