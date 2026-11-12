@@ -1,8 +1,5 @@
 version: 2
 updates:
-  # Base images in the Dockerfile. Patch and minor releases only, majors are a
-  # deliberate change. Merging the PR publishes the image, which podman
-  # auto-update then deploys.
   - package-ecosystem: docker
     directory: /rapid-builder
     schedule:
@@ -14,9 +11,7 @@ updates:
       base-images:
         patterns: ["*"]
 
-  # npm: security updates only. A limit of 0 turns version updates off, security
-  # updates are not affected by it. Needs "Dependabot security updates" enabled
-  # in the repository settings.
+  # Security updates only: limit 0 disables version updates.
   - package-ecosystem: npm
     directory: /rapid-builder
     schedule:

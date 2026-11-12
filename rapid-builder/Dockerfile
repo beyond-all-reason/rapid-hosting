@@ -8,9 +8,7 @@ RUN git clone --branch bunny-api-backend "$RCLONE_REPO" /src \
 WORKDIR /src
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o /rclone .
 
-# Base application image with all dependencies. Exact versions so that
-# Dependabot (.github/dependabot.yml) bumps them, which rebuilds and publishes
-# the image.
+# Base application image with all dependencies
 FROM node:26.13.1-trixie-slim AS base
 ARG RAPIDTOOLS_DEB=https://github.com/beyond-all-reason/RapidTools/releases/download/v0.3.0/rapidtools_0.3.0-0%2Bdebian13_amd64.deb
 
