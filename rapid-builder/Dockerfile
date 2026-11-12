@@ -1,6 +1,6 @@
 # rclone with the Bunny.net storage backend, built from the PR branch until
 # https://github.com/rclone/rclone/pull/9261 is merged and released.
-FROM golang:1.26-trixie AS rclone
+FROM golang:1.26.11-trixie AS rclone
 ARG RCLONE_REPO=https://github.com/istr/rclone.git
 ARG RCLONE_COMMIT=ffc797f1db617e1c65ac688d7f228faec5c2cfae
 RUN git clone --branch bunny-api-backend "$RCLONE_REPO" /src \
@@ -9,7 +9,7 @@ WORKDIR /src
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o /rclone .
 
 # Base application image with all dependencies
-FROM node:26-trixie-slim AS base
+FROM node:26.13.1-trixie-slim AS base
 ARG RAPIDTOOLS_DEB=https://github.com/beyond-all-reason/RapidTools/releases/download/v0.3.0/rapidtools_0.3.0-0%2Bdebian13_amd64.deb
 
 RUN apt-get update \
