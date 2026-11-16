@@ -14,7 +14,9 @@ import { createInterface } from "node:readline";
 import { test } from "node:test";
 import { gunzipSync } from "node:zlib";
 import { STORAGE_KEY } from "../dev/bunny.ts";
+import { GITHUB_REPOSITORY } from "../dev/oidc.ts";
 import { startSandbox } from "../dev/sandbox.ts";
+import { sshdMissing, startSshd } from "../dev/sshd.ts";
 import { run } from "../src/run.ts";
 
 async function toolsMissing(): Promise<string | false> {
@@ -41,7 +43,9 @@ test("the real pipeline", { skip: await toolsMissing(), timeout: 300_000 }, asyn
 	const firstSha = git(["rev-parse", "HEAD"]);
 	const prSha = git(["rev-parse", "refs/pull/7/head"]);
 
-	const sandbox = await startSandbox({ dir: path.join(work, "sandbox"), originDir });
+	const sshd = sshdMissing() ? undefined : await startSshd(path.join(work, "sshd"));
+	t.after(() => sshd?.close());
+	const sandbox = await startSandbox({ dir: path.join(work, "sandbox"), originDir, sshd });
 	t.after(() => sandbox.close());
 	const { bunny, oidc } = sandbox;
 	assert.ok(bunny, "the sandbox started the fake Bunny");
@@ -314,5 +318,19 @@ test("the real pipeline", { skip: await toolsMissing(), timeout: 300_000 }, asyn
 
 		disabled.kill("SIGTERM");
 		assert.equal(await disabled.exited, 0);
+	});
+
+	await t.test("a repo with a deploy key is fetched over ssh", { skip: !sshd }, async () => {
+		const res = await build({ repo: "testrepo-ssh", commit: prSha });
+		assert.equal(res.status, 200, res.text);
+		assert.ok(
+			res.text.includes(`$ git clone --no-checkout git@github.com:${GITHUB_REPOSITORY}.git`),
+			res.text,
+		);
+		assert.ok(
+			sshd?.log.some((l) => l.startsWith("Accepted publickey")),
+			`fetched with the deploy key: ${sshd?.log.join("\n")}`,
+		);
+		assert.ok(bunny.storage.has("testrepo-ssh/versions.gz"), "and published like any other");
 	});
 });

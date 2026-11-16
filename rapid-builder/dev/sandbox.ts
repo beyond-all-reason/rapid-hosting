@@ -14,12 +14,15 @@ import path from "node:path";
 import { type ConfigInput, parseConfig } from "../src/config.ts";
 import { API_KEY, type FakeBunny, STORAGE_KEY, startFakeBunny } from "./bunny.ts";
 import { AUDIENCE, type FakeIssuer, GITHUB_REPOSITORY, startOidcIssuer } from "./oidc.ts";
+import type { FakeSshd } from "./sshd.ts";
 
 /**
  * Name of the sandbox's own repo: what the build is published under, and the one
  * repo whose clone URL we redirect to the origin on disk.
  */
 const REPO_NAME = "testrepo";
+/** Name of the repo the sandbox fetches over SSH, when given an sshd. */
+const SSH_REPO_NAME = "testrepo-ssh";
 
 /** Config the sandbox builds on: whatever it names we use as it is. */
 export type BaseConfig = Partial<ConfigInput>;
@@ -47,6 +50,8 @@ export interface SandboxOptions {
 	bindHost?: string;
 	/** Default: whatever the OS gives. */
 	ports?: { storage?: number; edge?: number; oidc?: number };
+	/** Adds a repo that fetches the origin over SSH from this sshd. Default: none. */
+	sshd?: FakeSshd;
 }
 
 export async function startSandbox(opts: SandboxOptions): Promise<Sandbox> {
@@ -80,6 +85,13 @@ export async function startSandbox(opts: SandboxOptions): Promise<Sandbox> {
 	const audience = base.audience ?? AUDIENCE;
 	const repos = base.repos ?? {
 		[REPO_NAME]: { githubRepository: GITHUB_REPOSITORY, policy: "true" },
+		...(opts.sshd && {
+			[SSH_REPO_NAME]: {
+				githubRepository: GITHUB_REPOSITORY,
+				policy: "true",
+				ssh: opts.sshd.ssh,
+			},
+		}),
 	};
 
 	let oidc: FakeIssuer | undefined;
@@ -105,16 +117,24 @@ export async function startSandbox(opts: SandboxOptions): Promise<Sandbox> {
 	parseConfig(config);
 	await writeFile(configFile, `${JSON.stringify(config, null, "\t")}\n`);
 
-	// Only the sandbox's own repo is redirected to the origin on disk. A base
+	// We redirect only the sandbox's own repos to the origin on disk. A base
 	// config naming its own repos is built from GitHub, so this file is empty.
-	const gitConfigFile = path.join(dir, "gitconfig");
+	const redirects: string[] = [];
+	const redirect = (from: string, to: string) =>
+		redirects.push(`[url "${to}"]\n\tinsteadOf = ${from}\n`);
 	const sandboxRepo = repos[REPO_NAME];
+	if (sandboxRepo) {
+		redirect(`https://github.com/${sandboxRepo.githubRepository}.git`, `file://${originDir}`);
+	}
+	const sshRepo = repos[SSH_REPO_NAME];
+	if (opts.sshd && sshRepo) {
+		redirect(`git@github.com:${sshRepo.githubRepository}.git`, opts.sshd.url(originDir));
+	}
+	const gitConfigFile = path.join(dir, "gitconfig");
 	await writeFile(
 		gitConfigFile,
-		sandboxRepo
-			? `[url "file://${originDir}"]
-\tinsteadOf = https://github.com/${sandboxRepo.githubRepository}.git
-[protocol "file"]
+		redirects.length > 0
+			? `${redirects.join("")}[protocol "file"]
 \tallow = always
 [safe]
 \tdirectory = *

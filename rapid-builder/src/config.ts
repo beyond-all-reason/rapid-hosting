@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { z } from "zod";
 import { PolicySchema } from "./policy.ts";
+
+/** ssh resolves relative paths from the checkout and expands %, $, " and \: we reject them. */
+const SshPath = z.string().regex(/^\/[^%$"\\]*$/, 'must be an absolute path without %, $, " or \\');
 
 const RepoConfig = z.strictObject({
 	/** GitHub repository ("owner/name") the build is made from. */
@@ -11,6 +15,18 @@ const RepoConfig = z.strictObject({
 	modRoot: z.string().default("/"),
 	/** Argument for rapid-buildgit; see its usage for details. */
 	modinfo: z.string().default("modinfo.lua"),
+	/**
+	 * Fetch over SSH with a deploy key instead of anonymous HTTPS. Warning: git
+	 * uses the same key for submodules with SSH URLs.
+	 */
+	ssh: z
+		.strictObject({
+			/** Private deploy key without a passphrase, with file mode 0600 or 0400. */
+			keyFile: SshPath,
+			/** Default: GitHub's host keys, pinned in src/github_known_hosts. */
+			knownHostsFile: SshPath.default(path.join(import.meta.dirname, "github_known_hosts")),
+		})
+		.optional(),
 });
 
 const Config = z.strictObject({
