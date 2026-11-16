@@ -16,6 +16,9 @@ cp config.example.json config.json  # then edit
 Prefer `*_PATH` variables for passing secrets, see
 [Configuration](configuration.md).
 
+A deploy key in `ssh.keyFile` must be readable only by the service, which runs
+as uid 1000. For a podman secret: `--secret deploy_key,uid=1000,mode=0400`.
+
 ## Reverse proxy
 
 A proxy in front of the service must speak HTTP/1.1 upstream and must not

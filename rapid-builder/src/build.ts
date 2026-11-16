@@ -47,8 +47,10 @@ export async function runBuild(opts: {
 		}
 	};
 
-	const url = `https://github.com/${repo.githubRepository}.git`;
-	await step("git_sync", () => syncGitRepo(log, gitDir, url, commit));
+	const url = repo.ssh
+		? `git@github.com:${repo.githubRepository}.git`
+		: `https://github.com/${repo.githubRepository}.git`;
+	await step("git_sync", () => syncGitRepo(log, gitDir, url, commit, repo.ssh));
 	log(`Building ${repoName}:${branch} at ${commit}. Bunny mode: ${bunnyMode}`);
 
 	const args = [gitDir, repo.modRoot, repo.modinfo, storeDir, commit, repoName, branch];

@@ -8,11 +8,12 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
-import { syncGitRepo } from "../src/git.ts";
+import { sshdMissing, sshKeygen, startSshd } from "../dev/sshd.ts";
+import { type GitSsh, syncGitRepo } from "../src/git.ts";
 
 const work = await mkdtemp(path.join(tmpdir(), "rapid-build-git-"));
 after(() => rm(work, { recursive: true, force: true }));
@@ -56,9 +57,14 @@ const originUrl = `file://${originDir}`;
 const unknownSha = `${"0".repeat(39)}1`;
 
 /** Syncs a checkout, collecting the log so a test can see what git was asked. */
-async function sync(gitDir: string, commit: string, url = originUrl): Promise<string[]> {
+async function sync(
+	gitDir: string,
+	commit: string,
+	url = originUrl,
+	ssh?: GitSsh,
+): Promise<string[]> {
 	const lines: string[] = [];
-	await syncGitRepo((line) => lines.push(line), gitDir, url, commit);
+	await syncGitRepo((line) => lines.push(line), gitDir, url, commit, ssh);
 	return lines;
 }
 
@@ -176,4 +182,60 @@ test("submodules are initialised, updated and cleaned along with the superprojec
 	assert.equal(head(checkout), bumped);
 	assert.equal(await readFile(path.join(checkout, "sub", "sub.txt"), "utf8"), "v2\n");
 	assert.equal(existsSync(path.join(checkout, "sub", "extra.txt")), false, "submodule cleaned");
+});
+
+// --- Over SSH, against a real sshd -------------------------------------------
+
+const githubKnownHosts = path.join(import.meta.dirname, "../src/github_known_hosts");
+
+test("over ssh", { skip: sshdMissing() }, async (t) => {
+	// A space and a quote, to test that the ssh command line handles them.
+	const sshDir = path.join(work, "ssh dir's");
+	const sshd = await startSshd(sshDir);
+	t.after(sshd.close);
+	const { ssh } = sshd;
+	const sshUrl = sshd.url(originDir);
+	const checkout = path.join(work, "ssh-checkout");
+
+	await t.test("a first sync clones over ssh", async () => {
+		await sync(checkout, prSha, sshUrl, ssh);
+		assert.equal(head(checkout), prSha);
+	});
+
+	/** Checks that the sync over ssh fails and the log says why. */
+	async function refused(sshOpts: GitSsh, why: RegExp) {
+		const lines: string[] = [];
+		await assert.rejects(
+			syncGitRepo((line) => lines.push(line), checkout, sshUrl, masterSha, sshOpts),
+			{ message: "git exited with 128" },
+		);
+		assert.ok(
+			lines.some((l) => why.test(l)),
+			`the fetch said why: ${lines.join(" | ")}`,
+		);
+		assert.equal(head(checkout), prSha, "the checkout is left where it was");
+	}
+
+	await t.test("an unknown host is refused, not trusted", async () => {
+		const unrelated = path.join(sshDir, "unrelated_known_hosts");
+		await copyFile(githubKnownHosts, unrelated);
+		await refused({ ...ssh, knownHostsFile: unrelated }, /Host key verification failed/);
+		assert.equal(
+			await readFile(unrelated, "utf8"),
+			await readFile(githubKnownHosts, "utf8"),
+			"nothing was added to it",
+		);
+	});
+
+	await t.test("a host whose key changed is refused", async () => {
+		const impostor = path.join(sshDir, "impostor");
+		sshKeygen(impostor);
+		const [host] = (await readFile(ssh.knownHostsFile, "utf8")).split(" ");
+		const changed = path.join(sshDir, "changed_known_hosts");
+		await writeFile(changed, `${host} ${await readFile(`${impostor}.pub`, "utf8")}`);
+		await refused(
+			{ ...ssh, knownHostsFile: changed },
+			/REMOTE HOST IDENTIFICATION HAS CHANGED/,
+		);
+	});
 });
