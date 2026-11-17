@@ -27,3 +27,13 @@ builder_repos:
         (claims.ref == 'refs/heads/stable' && claims.event_name == 'push' && request.branch == 'test') ||
         (claims.ref == 'refs/heads/master' && claims.event_name == 'workflow_dispatch' && request.branch.matches(r'^(pr-[0-9]+|br-.*)$'))
       )
+  byar-assets:
+    githubRepository: beyond-all-reason/Beyond-All-Reason-Assets
+    policy: >
+      claims.ref == 'refs/heads/main' && !has(request.version) && request.branch == 'test'
+    ssh:
+      keyFile: /run/secrets/byar_assets_ssh_key
+
+builder_ssh_keys:
+  # Public part: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBmRhBfOV7ykRVxANzlYLFWhraPVuH5utiRHPY328SSr rapid-builder
+  byar_assets_ssh_key: "{{ vault_repo_byar_assets_ssh_key }}"
