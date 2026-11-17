@@ -1,6 +1,6 @@
 # rclone with the Bunny.net storage backend, built from the PR branch until
 # https://github.com/rclone/rclone/pull/9261 is merged and released.
-FROM golang:1.27.0-trixie AS rclone
+FROM golang:1.27.3-trixie AS rclone
 ARG RCLONE_REPO=https://github.com/istr/rclone.git
 ARG RCLONE_COMMIT=b7f203b914d494cfbc8857df26579082a12654e3
 RUN git clone --branch bunny-api-backend "$RCLONE_REPO" /src \
