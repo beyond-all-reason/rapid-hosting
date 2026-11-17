@@ -9,3 +9,7 @@ builder_repos:
   minitest:
     githubRepository: p2004a/minimal-rapid-repo
     policy: "true"
+
+# Private SSH keys for repos in builder_repos mounted at /run/secrets/<name>
+# for the repo's ssh.keyFile.
+builder_ssh_keys: {}
