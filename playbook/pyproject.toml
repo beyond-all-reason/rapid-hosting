@@ -1,0 +1,12 @@
+[project]
+name = "rapid-hosting-playbook"
+version = "0.1.0"
+description = "Ansible playbook to setup BAR rapid hosting server"
+requires-python = ">=3.13"
+dependencies = [
+    "ansible-core==2.21.6",
+    "ansible-monitoring",
+]
+
+[tool.uv.sources]
+ansible-monitoring = { git = "https://github.com/beyond-all-reason/ansible-monitoring.git", rev = "866739d16be72e76cb5ed7e48d224fbb4d7db598" }
