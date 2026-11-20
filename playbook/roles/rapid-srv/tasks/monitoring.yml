@@ -11,7 +11,7 @@
                 - caddy.dns.podman:2020
           relabel_configs:
             - target_label: instance
-              replacement: "{{ ansible_hostname }}"
+              replacement: "{{ ansible_facts['hostname'] }}"
       02_rapid_build:
         - job_name: rapid-build
           static_configs:
@@ -19,7 +19,7 @@
                 - rapid-build.dns.podman:9464
           relabel_configs:
             - target_label: instance
-              replacement: "{{ ansible_hostname }}"
+              replacement: "{{ ansible_facts['hostname'] }}"
     monitoring_log_configs:
       fluent_bit:
         - template: fluent-bit.yaml.j2

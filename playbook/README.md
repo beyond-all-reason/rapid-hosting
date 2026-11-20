@@ -15,14 +15,17 @@ Usage
 
 ### Dependencies
 
+Ansible is managed via [uv](https://docs.astral.sh/uv/). Make sure you have `uv` installed
+and prefix Ansible commands with `uv run`.
+
 Make sure required collections are installed by running:
 
 ```sh
-ansible-galaxy collection install -r requirements.yml
+uv run sync-collections
 ```
 
-If you pull the repo and there are changes to that file, you need to rerun the command to
-make sure you pick up the latest changes.
+If you pull the repo and there are changes to `requirements.yml`, you need to rerun the
+command to make sure you pick up the latest changes.
 
 ### Vault
 
@@ -42,7 +45,7 @@ it in a file (Please put it only in something like
 Check what would change on the production host with:
 
 ```sh
-ansible-playbook -l prod play.yml --check --diff
+uv run ansible-playbook -l prod play.yml --check --diff
 ```
 
 Then drop the `--check` flag to actually apply the changes.
@@ -67,7 +70,7 @@ incus exec bar-rapid-test -- cloud-init status --wait
 Then test that it works for ansible:
 
 ```sh
-ansible dev -m shell -a 'uname -a'
+uv run ansible dev -m shell -a 'uname -a'
 ```
 
 The test container serves the repos under the `rapid.local` domain name, so it
@@ -75,7 +78,7 @@ needs to resolve to the container. Easiest is to add an entry to `/etc/hosts`, w
 can add/update with:
 
 ```sh
-ansible ,localhost -b -K -m lineinfile -a "path=/etc/hosts regexp='.*rapid\.local.*' line='$(ansible-inventory --host test | jq -r '.ansible_host') rapid.local'"
+uv run ansible ,localhost -b -K -m lineinfile -a "path=/etc/hosts regexp='.*rapid\.local.*' line='$(uv run ansible-inventory --host test | jq -r '.ansible_host') rapid.local'"
 ```
 
 ### Usage
@@ -84,13 +87,13 @@ Now you can use the playbook as usual, just make sure you are targeting the `dev
 inventory group or the `test` host:
 
 ```sh
-ansible-playbook -l dev play.yml --diff
+uv run ansible-playbook -l dev play.yml --diff
 ```
 
 You can ssh into it with something like:
 
 ```sh
-ssh -i test.ssh.key ansible@$(ansible-inventory --host test | jq -r '.ansible_host')
+ssh -i test.ssh.key ansible@$(uv run ansible-inventory --host test | jq -r '.ansible_host')
 ```
 
 Or enter directly into the root container shell with:
@@ -127,7 +130,7 @@ run:
 
 ```sh
 MON_HOST_IP=$(incus list -f csv -c 4 bar-mon-test | grep -E 'eth|enp' | cut -d' ' -f1)
-ansible-playbook -l dev play.yml --diff -t monitoring \
+uv run ansible-playbook -l dev play.yml --diff -t monitoring \
   -e "{ configure_monitoring: true, monitoring_write_host_ip: $MON_HOST_IP }"
 ```
 
